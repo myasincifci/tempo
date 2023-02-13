@@ -5,9 +5,9 @@ import torch
 
 from copy import deepcopy
 
-class TimeShiftModel(nn.Module):
+class Tempo34(nn.Module):
     def __init__(self) -> None:
-        super(TimeShiftModel, self).__init__()
+        super(Tempo34, self).__init__()
         resnet = resnet34(ResNet34_Weights.IMAGENET1K_V1)
         self.backbone = nn.Sequential(*list(resnet.children())[:-1])
         self.backbone[0] = nn.Conv2d(1, 64, kernel_size=(3, 3), stride=(2, 2), padding=(3, 3), bias=False)
@@ -18,9 +18,9 @@ class TimeShiftModel(nn.Module):
         z = self.projection_head(x)
         return z
 
-class TimeShiftModel50(nn.Module):
+class Tempo50(nn.Module):
     def __init__(self) -> None:
-        super(TimeShiftModel50, self).__init__()
+        super(Tempo50, self).__init__()
         resnet = resnet50(ResNet50_Weights.IMAGENET1K_V1)
         self.backbone = nn.Sequential(*list(resnet.children())[:-1])
         # self.backbone[0] = nn.Conv2d(3, 64, kernel_size=(3, 3), stride=(2, 2), padding=(3, 3), bias=False)
