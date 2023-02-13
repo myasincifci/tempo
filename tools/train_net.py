@@ -9,7 +9,7 @@ from lightly.loss import BarlowTwinsLoss
 from tempo.models import Tempo34, Baseline
 from tempo.data.datasets import hand_dataset
 
-from linear_eval import linear_eval
+from linear_eval import linear_eval_fast
 
 def train_one_epoch(model, dataloader, criterion, optimizer, device):
     losses = []
@@ -52,12 +52,12 @@ def main(args):
 
     if evaluation == 'baseline':
         print('Evaluating baseline ...')
-        model = Baseline(out_features=3, freeze_backbone=True, pretrain=True)
-        linear_eval(model, train_loader, test_loader, device)
+        model = Baseline(out_features=3, freeze_backbone=True, pretrain=True).to(device)
+        linear_eval_fast(model, train_loader, test_loader, device)
     else:
         model = train(epochs, lr, l, train_loader, device)
         if evaluation == 'linear':
-            linear_eval(model, train_loader, test_loader, device)
+            linear_eval_fast(model, train_loader, test_loader, device)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
