@@ -103,6 +103,10 @@ def linear_eval_fast(model, train_loader, test_loader, device):
     plt.ylabel('Test error')
     plt.show()
 
+    save=True
+    if save:
+        torch.save(eval_model, 'model_zoo/model.pth')
+
 def linear_eval(model, train_loader, test_loader, device):
     eval_model = LinearEval(backbone=model.backbone, out_features=3, freeze_backbone=True).to(device)
 
@@ -137,7 +141,11 @@ def linear_eval(model, train_loader, test_loader, device):
     plt.ylabel('Test error')
     plt.show()
 
-def main(args):
+    save=True
+    if save:
+        torch.save(eval_model, 'model_zoo/model.pth')
+
+def main():
     pass
 
 if __name__ == '__main__':
