@@ -31,25 +31,30 @@ class Tempo50(nn.Module):
         z = self.projection_head(x)
         return z
 
-class BaselineRandomInit(nn.Module):
-    def __init__(self):
-        super(BaselineRandomInit, self).__init__()
-        resnet = resnet34()
-        self.backbone = nn.Sequential(*list(resnet.children())[:-1])
-        self.backbone[0] = nn.Conv2d(1, 64, kernel_size=(3, 3), stride=(2, 2), padding=(3, 3), bias=False)
-        self.linear = nn.Linear(in_features=512, out_features=3, bias=True)
+# class BaselineRandomInit(nn.Module):
+#     def __init__(self):
+#         super(BaselineRandomInit, self).__init__()
+#         resnet = resnet34()
+#         self.backbone = nn.Sequential(*list(resnet.children())[:-1])
+#         self.backbone[0] = nn.Conv2d(1, 64, kernel_size=(3, 3), stride=(2, 2), padding=(3, 3), bias=False)
+#         self.linear = nn.Linear(in_features=512, out_features=3, bias=True)
 
-    def forward(self, x):
-        x = self.backbone(x)
-        x = torch.flatten(x, start_dim=1)
-        x = self.linear(x)
+#     def forward(self, x):
+#         x = self.backbone(x)
+#         x = torch.flatten(x, start_dim=1)
+#         x = self.linear(x)
 
-        return x
+#         return x
 
-class BaselineImagenet1K(nn.Module):
-    def __init__(self, out_features:int, freeze_backbone:bool=False):
-        super(BaselineImagenet1K, self).__init__()
-        resnet = resnet34(ResNet34_Weights.IMAGENET1K_V1)
+class Baseline(nn.Module):
+    def __init__(self, out_features:int, freeze_backbone:bool=False, pretrain=True):
+        super(Baseline, self).__init__()
+
+        if pretrain:
+            resnet = resnet34(ResNet34_Weights.IMAGENET1K_V1)
+        else:
+            resnet = resnet34()
+        
         self.backbone = nn.Sequential(*list(resnet.children())[:-1])
         self.backbone[0] = nn.Conv2d(1, 64, kernel_size=(3, 3), stride=(2, 2), padding=(3, 3), bias=False)
         self.linear = nn.Linear(in_features=512, out_features=out_features, bias=True)
@@ -75,6 +80,17 @@ class LinearEval(nn.Module):
 
     def forward(self, x):
         x = self.backbone(x)
+        x = torch.flatten(x, start_dim=1)
+        x = self.linear(x)
+
+        return x
+
+class LinearEvalHead(nn.Module):
+    def __init__(self, out_features:int):
+        super(LinearEvalHead, self).__init__()
+        self.linear = nn.Linear(in_features=512, out_features=out_features, bias=True)
+
+    def forward(self, x):
         x = torch.flatten(x, start_dim=1)
         x = self.linear(x)
 

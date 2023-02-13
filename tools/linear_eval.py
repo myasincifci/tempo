@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 from tempo.data.datasets import hand_dataset
 from lightly.loss import BarlowTwinsLoss
-from tempo.models import Tempo34, LinearEval, BaselineImagenet1K
+from tempo.models import Tempo34, LinearEval, Baseline
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -26,19 +26,6 @@ def train_one_epoch(model, dataloader, criterion, optimizer, device):
     avg_loss = torch.tensor(losses).mean()
     return avg_loss
 
-def train(epochs, lr, l):
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    print(f'Using device: {device}.')
-
-    dataloader = hand_dataset()
-
-    model = TimeShiftModel().to(device)
-    criterion = BarlowTwinsLoss(lambda_param=l)
-    optimizer = torch.optim.SGD(model.parameters(), lr=lr, weight_decay=0.001)
-
-    for epoch in range(epochs):
-        train_one_epoch(model, dataloader, criterion, optimizer, device)
-
 def test_model(model, test_dataset, testloader, device):
 
     wrongly_classified = 0
@@ -56,8 +43,8 @@ def test_model(model, test_dataset, testloader, device):
     return wrongly_classified / len(test_dataset)
 
 def linear_eval(model, train_loader, test_loader, device):
-    # eval_model = LinearEval(backbone=model.backbone, out_features=3, freeze_backbone=True).to(device)
-    eval_model = BaselineImagenet1K(out_features=3, freeze_backbone=True).to(device)
+    backbone = model.backbone
+    eval_model = LinearEval(backbone=model.backbone, out_features=3, freeze_backbone=True).to(device)
 
     criterion = nn.CrossEntropyLoss().cuda()
     optimizer = torch.optim.SGD(eval_model.parameters(), lr=0.001)

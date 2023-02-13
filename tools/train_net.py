@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 from torchvision import transforms as T
 from lightly.loss import BarlowTwinsLoss
 
-from tempo.models import Tempo34
+from tempo.models import Tempo34, Baseline
 from tempo.data.datasets import hand_dataset
 
 from linear_eval import linear_eval
@@ -39,10 +39,10 @@ def train(epochs, lr, l, train_loader, device):
     return model
 
 def main(args):
-    epochs = args.epochs if args.epochs else 30
+    epochs = args.epochs if args.epochs else 1
     lr = args.lr if args.lr else 1e-3
     l = args.l if args.l else 1e-3
-    evaluation = args.eval if args.eval else None
+    evaluation = args.eval if args.eval else 'linear'
 
     train_loader = hand_dataset(train=True)
     test_loader = hand_dataset(train=False)
@@ -50,9 +50,14 @@ def main(args):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f'Using device: {device}.')
 
-    model = train(epochs, lr, l, train_loader, device)
-    if evaluation == 'linear':
+    if evaluation == 'baseline':
+        print('Evaluating baseline ...')
+        model = Baseline(out_features=3, freeze_backbone=True, pretrain=True)
         linear_eval(model, train_loader, test_loader, device)
+    else:
+        model = train(epochs, lr, l, train_loader, device)
+        if evaluation == 'linear':
+            linear_eval(model, train_loader, test_loader, device)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
