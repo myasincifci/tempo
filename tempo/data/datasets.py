@@ -7,7 +7,7 @@ def hand_dataset(batch_size=80, proximity=30, train=True):
     transform = T.Compose([
         T.Resize(128),
         T.ToTensor(),
-        T.Grayscale()
+        # T.Grayscale()
     ])
 
     dataset = TimeShiftDataset('./datasets/hand', transform=transform, proximity=proximity, train=train)

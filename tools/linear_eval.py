@@ -58,7 +58,7 @@ def test_model(model, test_dataset, testloader, device):
 
     return wrongly_classified / len(test_dataset)
 
-def linear_eval_fast(model, train_loader, test_loader, device):
+def linear_eval_fast(epochs, model, train_loader, test_loader, device):
     backbone = model.backbone
     reps = []
     for input, _, label, _ in train_loader:
@@ -77,7 +77,7 @@ def linear_eval_fast(model, train_loader, test_loader, device):
     optimizer = torch.optim.SGD(eval_model.parameters(), lr=0.001)
 
     losses, errors = [], []
-    for epoch in range(30):
+    for epoch in range(epochs):
         running_loss = 0.0
         for repr, label in reps:
             labels = nn.functional.one_hot(label, num_classes=3).float()
@@ -97,15 +97,17 @@ def linear_eval_fast(model, train_loader, test_loader, device):
         errors.append(test_error)
     losses, errors = np.array(losses), np.array(errors)
 
-    plt.plot(np.arange(30), errors, '-r', label='error')
-    plt.legend(loc="upper left")
-    plt.xlabel('Epochs')
-    plt.ylabel('Test error')
-    plt.show()
+    return (losses, errors)
 
-    save=True
-    if save:
-        torch.save(eval_model, 'model_zoo/model.pth')
+    # plt.plot(np.arange(50), errors, '-r', label='error')
+    # plt.legend(loc="upper left")
+    # plt.xlabel('Epochs')
+    # plt.ylabel('Test error')
+    # plt.show()
+
+    # save=True
+    # if save:
+    #     torch.save(eval_model, 'model_zoo/model.pth')
 
 def linear_eval(model, train_loader, test_loader, device):
     eval_model = LinearEval(backbone=model.backbone, out_features=3, freeze_backbone=True).to(device)
@@ -114,7 +116,7 @@ def linear_eval(model, train_loader, test_loader, device):
     optimizer = torch.optim.SGD(eval_model.parameters(), lr=0.001)
 
     losses, errors = [], []
-    for epoch in range(30):
+    for epoch in range(50):
         running_loss = 0.0
         for i, data in enumerate(train_loader, 0):
             inputs, _, labels, _ = data
@@ -135,15 +137,17 @@ def linear_eval(model, train_loader, test_loader, device):
         errors.append(test_error)
     losses, errors = np.array(losses), np.array(errors)
 
-    plt.plot(np.arange(30), errors, '-r', label='error')
-    plt.legend(loc="upper left")
-    plt.xlabel('Epochs')
-    plt.ylabel('Test error')
-    plt.show()
+    return (losses, errors)
 
-    save=True
-    if save:
-        torch.save(eval_model, 'model_zoo/model.pth')
+    # plt.plot(np.arange(100), errors, '-r', label='error')
+    # plt.legend(loc="upper left")
+    # plt.xlabel('Epochs')
+    # plt.ylabel('Test error')
+    # plt.show()
+
+    # save=True
+    # if save:
+    #     torch.save(eval_model, 'model_zoo/model_bl.pth')
 
 def main():
     pass
