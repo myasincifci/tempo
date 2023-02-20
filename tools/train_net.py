@@ -15,6 +15,8 @@ from tempo.data.datasets import hand_dataset
 from linear_eval import linear_eval_fast, linear_eval
 from finetune_eval import ft_eval
 
+from torch.utils.tensorboard import SummaryWriter
+
 def train_one_epoch(model, dataloader, criterion, optimizer, device):
     losses = []
     for image, image_d, _, _ in tqdm(dataloader):
@@ -57,23 +59,29 @@ def main(args):
 
     train_loader_ss = hand_dataset(train=True, subset=None)
 
-    if baseline:
-        freeze_backbone = not (evaluation == 'linear')
+    writer = SummaryWriter()
 
-        model_bl = BaselineRGB(out_features=3, freeze_backbone=True, pretrain=True).to(device)
+    if baseline:
+        print("Baseline ...")
+        freeze_backbone = (evaluation == 'linear')
+        print(freeze_backbone)
+
+        model_bl = BaselineRGB(out_features=3, freeze_backbone=freeze_backbone, pretrain=True).to(device)
 
         e_bl = []
         for i in tqdm(range(30)):
 
             if evaluation == 'linear':
-                _, errors_bl = linear_eval_fast(200, model_bl, train_loader_ss, test_loader, device)
+                iterations, _, errors_bl = linear_eval_fast(200, model_bl, train_loader_ss, test_loader, device)
             elif evaluation == 'finetune':
-                _, errors_bl = ft_eval(100, model_bl, train_loader_ss, test_loader, device)
+                iterations, _, errors_bl = ft_eval(100, model_bl, train_loader_ss, test_loader, device)
 
             e_bl.append(errors_bl.reshape(1,-1))
         e_bl = np.concatenate(e_bl, axis=0).mean(axis=0)
 
-        plt.plot(np.arange(len(e_bl)), e_bl, '-r', label='error_bl')
+        for i, e in zip(iterations, errors_bl):
+                writer.add_scalar("error", e, i)
+        # plt.plot(np.arange(len(e_bl)), e_bl, '-r', label='error_bl')
     
     else:
 
@@ -86,21 +94,25 @@ def main(args):
                 e.append(errors.reshape(1,-1))
             e = np.concatenate(e, axis=0).mean(axis=0)
 
-            plt.plot(iterations, e, '-b', label='error_tempo')
+            for i, e in zip(iterations, errors):
+                writer.add_scalar("error", e, i)
+            # plt.plot(iterations, e, '-b', label='error_tempo')
 
         elif evaluation == 'finetune':
             e = []
-            for i in tqdm(range(1)):
+            for i in tqdm(range(3)):
                 iterations, _, errors = ft_eval(100, model, train_loader_ss, test_loader, device)
                 e.append(errors.reshape(1,-1))
             e = np.concatenate(e, axis=0).mean(axis=0)
 
             plt.plot(iterations, e, '-b', label='error_tempo')
 
-    plt.legend(loc="best")
-    plt.xlabel('Epochs')
-    plt.ylabel('Test error')
-    plt.show()
+    writer.close()
+
+    # plt.legend(loc="best")
+    # plt.xlabel('Epochs')
+    # plt.ylabel('Test error')
+    # plt.show()
     
 
 if __name__ == '__main__':
