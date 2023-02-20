@@ -13,6 +13,7 @@ from tempo.models import Tempo34RGB, BaselineRGB
 from tempo.data.datasets import hand_dataset
 
 from linear_eval import linear_eval_fast, linear_eval
+from finetune_eval import ft_eval
 
 def train_one_epoch(model, dataloader, criterion, optimizer, device):
     losses = []
@@ -46,7 +47,7 @@ def main(args):
     lr = args.lr if args.lr else 1e-3
     l = args.l if args.l else 1e-3
     evaluation = args.eval if args.eval else 'linear'
-    comp_bl = args.comp_bl if args.comp_bl else True
+    baseline = args.baseline
 
     train_loader = hand_dataset(train=True)
     test_loader = hand_dataset(train=False)
@@ -54,40 +55,48 @@ def main(args):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f'Using device: {device}.')
 
-    # if evaluation == 'baseline':
-    #     print('Evaluating baseline ...')
-    #     model = BaselineRGB(out_features=3, freeze_backbone=True, pretrain=True).to(device)
-    #     linear_eval(model, train_loader, test_loader, device)
-    # else:
-    #     model = train(epochs, lr, l, train_loader, device)
-    #     if evaluation == 'linear':
-    #         linear_eval(model, train_loader, test_loader, device)
+    train_loader_ss = hand_dataset(train=True, subset=None)
 
-    model = train(epochs, lr, l, train_loader, device)
-
-    if evaluation == 'linear':
-
-        e = []
-        for i in tqdm(range(30)):
-            _, errors = linear_eval_fast(100, model, train_loader, test_loader, device)
-            e.append(errors.reshape(1,-1))
-        e = np.concatenate(e, axis=0).mean(axis=0)
-
-        plt.plot(np.arange(len(e)), e, '-b', label='error_tempo')
-
-    if comp_bl:
+    if baseline:
+        freeze_backbone = not (evaluation == 'linear')
 
         model_bl = BaselineRGB(out_features=3, freeze_backbone=True, pretrain=True).to(device)
 
         e_bl = []
         for i in tqdm(range(30)):
-            _, errors_bl = linear_eval_fast(100, model_bl, train_loader, test_loader, device)
+
+            if evaluation == 'linear':
+                _, errors_bl = linear_eval_fast(200, model_bl, train_loader_ss, test_loader, device)
+            elif evaluation == 'finetune':
+                _, errors_bl = ft_eval(100, model_bl, train_loader_ss, test_loader, device)
+
             e_bl.append(errors_bl.reshape(1,-1))
         e_bl = np.concatenate(e_bl, axis=0).mean(axis=0)
 
         plt.plot(np.arange(len(e_bl)), e_bl, '-r', label='error_bl')
-
     
+    else:
+
+        model = train(epochs, lr, l, train_loader, device)
+
+        if evaluation == 'linear':
+            e = []
+            for i in tqdm(range(30)):
+                _, errors = linear_eval_fast(200, model, train_loader_ss, test_loader, device)
+                e.append(errors.reshape(1,-1))
+            e = np.concatenate(e, axis=0).mean(axis=0)
+
+            plt.plot(np.arange(len(e)), e, '-b', label='error_tempo')
+
+        elif evaluation == 'finetune':
+            e = []
+            for i in tqdm(range(3)):
+                _, errors = ft_eval(100, model, train_loader_ss, test_loader, device)
+                e.append(errors.reshape(1,-1))
+            e = np.concatenate(e, axis=0).mean(axis=0)
+
+            plt.plot(np.arange(len(e)), e, '-b', label='error_tempo')
+
     plt.legend(loc="best")
     plt.xlabel('Epochs')
     plt.ylabel('Test error')
@@ -100,7 +109,7 @@ if __name__ == '__main__':
     parser.add_argument('--lr', type=float, required=False)
     parser.add_argument('--l', type=float, required=False)
     parser.add_argument('--eval', type=str, required=False)
-    parser.add_argument('--comp_bl', type=bool, required=False)
+    parser.add_argument('--baseline', type=bool, required=False)
 
     args = parser.parse_args()
 
