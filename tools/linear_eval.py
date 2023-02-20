@@ -76,10 +76,12 @@ def linear_eval_fast(epochs, model, train_loader, test_loader, device):
     criterion = nn.CrossEntropyLoss().cuda()
     optimizer = torch.optim.SGD(eval_model.parameters(), lr=0.001)
 
-    losses, errors = [], []
+    i = 0
+    iterations, losses, errors = [], [], []
     for epoch in range(epochs):
         running_loss = 0.0
         for repr, label in reps:
+            
             labels = nn.functional.one_hot(label, num_classes=3).float()
             inputs, labels = repr.to(device), labels.to(device)
 
@@ -91,23 +93,17 @@ def linear_eval_fast(epochs, model, train_loader, test_loader, device):
             optimizer.step()
 
             running_loss += loss.item()
+            i += 1
+
 
         test_error = test_model_fast(eval_model, test_reps, test_loader.dataset, device)
         losses.append(running_loss)
         errors.append(test_error)
-    losses, errors = np.array(losses), np.array(errors)
+        iterations.append(i)
 
-    return (losses, errors)
+    iterations, losses, errors = np.array(iterations), np.array(losses), np.array(errors)
 
-    # plt.plot(np.arange(50), errors, '-r', label='error')
-    # plt.legend(loc="upper left")
-    # plt.xlabel('Epochs')
-    # plt.ylabel('Test error')
-    # plt.show()
-
-    # save=True
-    # if save:
-    #     torch.save(eval_model, 'model_zoo/model.pth')
+    return (iterations, losses, errors)
 
 def linear_eval(model, train_loader, test_loader, device):
     eval_model = LinearEval(backbone=model.backbone, out_features=3, freeze_backbone=True).to(device)
@@ -138,16 +134,6 @@ def linear_eval(model, train_loader, test_loader, device):
     losses, errors = np.array(losses), np.array(errors)
 
     return (losses, errors)
-
-    # plt.plot(np.arange(100), errors, '-r', label='error')
-    # plt.legend(loc="upper left")
-    # plt.xlabel('Epochs')
-    # plt.ylabel('Test error')
-    # plt.show()
-
-    # save=True
-    # if save:
-    #     torch.save(eval_model, 'model_zoo/model_bl.pth')
 
 def main():
     pass

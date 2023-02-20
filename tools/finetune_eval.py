@@ -49,10 +49,11 @@ def ft_eval(epochs, model, train_loader, test_loader, device):
     criterion = nn.CrossEntropyLoss().cuda()
     optimizer = torch.optim.SGD(eval_model.parameters(), lr=0.001)
 
-    losses, errors = [], []
+    i = 0
+    iterations, losses, errors = [], [], []
     for epoch in range(epochs):
         running_loss = 0.0
-        for i, data in enumerate(train_loader, 0):
+        for data in train_loader:
             inputs, _, labels, _ = data
             labels = nn.functional.one_hot(labels, num_classes=3).float()
             inputs, labels = inputs.to(device), labels.to(device)
@@ -65,13 +66,15 @@ def ft_eval(epochs, model, train_loader, test_loader, device):
             optimizer.step()
 
             running_loss += loss.item()
+            i += 1
 
         test_error = test_model(eval_model, test_loader.dataset, test_loader, device)
         losses.append(running_loss)
         errors.append(test_error)
-    losses, errors = np.array(losses), np.array(errors)
+        iterations.append(i)
+    iterations, losses, errors = np.array(iterations), np.array(losses), np.array(errors)
 
-    return (losses, errors)
+    return (iterations, losses, errors)
 
 def main():
     pass

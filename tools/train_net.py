@@ -82,20 +82,20 @@ def main(args):
         if evaluation == 'linear':
             e = []
             for i in tqdm(range(30)):
-                _, errors = linear_eval_fast(200, model, train_loader_ss, test_loader, device)
+                iterations, _, errors = linear_eval_fast(200, model, train_loader_ss, test_loader, device)
                 e.append(errors.reshape(1,-1))
             e = np.concatenate(e, axis=0).mean(axis=0)
 
-            plt.plot(np.arange(len(e)), e, '-b', label='error_tempo')
+            plt.plot(iterations, e, '-b', label='error_tempo')
 
         elif evaluation == 'finetune':
             e = []
-            for i in tqdm(range(3)):
-                _, errors = ft_eval(100, model, train_loader_ss, test_loader, device)
+            for i in tqdm(range(1)):
+                iterations, _, errors = ft_eval(100, model, train_loader_ss, test_loader, device)
                 e.append(errors.reshape(1,-1))
             e = np.concatenate(e, axis=0).mean(axis=0)
 
-            plt.plot(np.arange(len(e)), e, '-b', label='error_tempo')
+            plt.plot(iterations, e, '-b', label='error_tempo')
 
     plt.legend(loc="best")
     plt.xlabel('Epochs')
