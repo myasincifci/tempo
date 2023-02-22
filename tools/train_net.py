@@ -14,6 +14,8 @@ from tempo.data.datasets import hand_dataset
 
 from linear_eval import linear_eval_fast, linear_eval
 
+from torch.utils.tensorboard import SummaryWriter
+
 def train_one_epoch(model, dataloader, criterion, optimizer, device):
     losses = []
     for image, image_d, _, _ in tqdm(dataloader):
@@ -42,41 +44,23 @@ def train(epochs, lr, l, train_loader, device):
     return model
 
 def main(args):
+    np.random.seed(42)
+
     epochs = args.epochs if args.epochs else 5
     lr = args.lr if args.lr else 1e-3
     l = args.l if args.l else 1e-3
     evaluation = args.eval if args.eval else 'linear'
-    comp_bl = args.comp_bl if args.comp_bl else True
+    baseline = args.baseline if args.baseline else False
+    proximity = args.proximity if args.proximity else 30
 
-    train_loader = hand_dataset(train=True)
+    print(proximity)
+    train_loader = hand_dataset(train=True, proximity=proximity)
     test_loader = hand_dataset(train=False)
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f'Using device: {device}.')
 
-    # if evaluation == 'baseline':
-    #     print('Evaluating baseline ...')
-    #     model = BaselineRGB(out_features=3, freeze_backbone=True, pretrain=True).to(device)
-    #     linear_eval(model, train_loader, test_loader, device)
-    # else:
-    #     model = train(epochs, lr, l, train_loader, device)
-    #     if evaluation == 'linear':
-    #         linear_eval(model, train_loader, test_loader, device)
-
-    model = train(epochs, lr, l, train_loader, device)
-
-    if evaluation == 'linear':
-
-        e = []
-        for i in tqdm(range(30)):
-            _, errors = linear_eval_fast(100, model, train_loader, test_loader, device)
-            e.append(errors.reshape(1,-1))
-        e = np.concatenate(e, axis=0).mean(axis=0)
-
-        plt.plot(np.arange(len(e)), e, '-b', label='error_tempo')
-
-    if comp_bl:
-
+    if baseline:
         model_bl = BaselineRGB(out_features=3, freeze_backbone=True, pretrain=True).to(device)
 
         e_bl = []
@@ -85,14 +69,26 @@ def main(args):
             e_bl.append(errors_bl.reshape(1,-1))
         e_bl = np.concatenate(e_bl, axis=0).mean(axis=0)
 
-        plt.plot(np.arange(len(e_bl)), e_bl, '-r', label='error_bl')
+        writer = SummaryWriter()
+        for i in np.arange(len(e_bl)):
+            writer.add_scalar('error', e_bl[i], i)
+        writer.close()
 
-    
-    plt.legend(loc="best")
-    plt.xlabel('Epochs')
-    plt.ylabel('Test error')
-    plt.show()
-    
+    else:
+        model = train(epochs, lr, l, train_loader, device)
+
+        if evaluation == 'linear':
+
+            e = []
+            for i in tqdm(range(30)):
+                _, errors = linear_eval_fast(100, model, train_loader, test_loader, device)
+                e.append(errors.reshape(1,-1))
+            e = np.concatenate(e, axis=0).mean(axis=0)
+
+            writer = SummaryWriter()
+            for i in np.arange(len(e)):
+                writer.add_scalar('error', e[i], i)
+            writer.close()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -100,7 +96,8 @@ if __name__ == '__main__':
     parser.add_argument('--lr', type=float, required=False)
     parser.add_argument('--l', type=float, required=False)
     parser.add_argument('--eval', type=str, required=False)
-    parser.add_argument('--comp_bl', type=bool, required=False)
+    parser.add_argument('--baseline', type=bool, required=False)
+    parser.add_argument('--proximity', type=int, required=False)
 
     args = parser.parse_args()
 

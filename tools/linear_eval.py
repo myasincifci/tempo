@@ -74,7 +74,7 @@ def linear_eval_fast(epochs, model, train_loader, test_loader, device):
     eval_model = LinearEvalHead(out_features=3).to(device)
 
     criterion = nn.CrossEntropyLoss().cuda()
-    optimizer = torch.optim.SGD(eval_model.parameters(), lr=0.001)
+    optimizer = torch.optim.SGD(eval_model.parameters(), lr=0.01)
 
     losses, errors = [], []
     for epoch in range(epochs):
