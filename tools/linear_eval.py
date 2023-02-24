@@ -61,12 +61,12 @@ def test_model(model, test_dataset, testloader, device):
 def linear_eval_fast(epochs, model, train_loader, test_loader, device):
     backbone = model.backbone
     reps = []
-    for input, _, label, _ in train_loader:
+    for input, label in train_loader:
         repr = backbone(input.to(device)).detach()
         reps.append((repr, label.to(device)))
 
     test_reps = []
-    for input, _, label, _ in test_loader:
+    for input, label in test_loader:
         repr = backbone(input.to(device)).detach()
         test_reps.append((repr, label.to(device)))
 

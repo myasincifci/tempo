@@ -10,7 +10,7 @@ from torchvision import transforms as T
 from lightly.loss import BarlowTwinsLoss
 
 from tempo.models import Tempo34RGB, BaselineRGB
-from tempo.data.datasets import hand_dataset
+from tempo.data.datasets import hand_dataset, hand_dataset_2, hand_dataset_2_ft
 
 from linear_eval import linear_eval_fast, linear_eval
 
@@ -44,8 +44,6 @@ def train(epochs, lr, l, train_loader, device):
     return model
 
 def main(args):
-    np.random.seed(42)
-
     epochs = args.epochs if args.epochs else 5
     lr = args.lr if args.lr else 1e-3
     l = args.l if args.l else 1e-3
@@ -54,8 +52,10 @@ def main(args):
     proximity = args.proximity if args.proximity else 30
 
     print(proximity)
-    train_loader = hand_dataset(train=True, proximity=proximity)
-    test_loader = hand_dataset(train=False)
+    train_loader = hand_dataset_2(train=True, proximity=proximity)
+
+    train_loader_ft = hand_dataset_2_ft(train=True)
+    test_loader_ft = hand_dataset_2_ft(train=False)
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f'Using device: {device}.')
@@ -64,8 +64,8 @@ def main(args):
         model_bl = BaselineRGB(out_features=3, freeze_backbone=True, pretrain=True).to(device)
 
         e_bl = []
-        for i in tqdm(range(30)):
-            _, errors_bl = linear_eval_fast(100, model_bl, train_loader, test_loader, device)
+        for i in tqdm(range(10)):
+            _, errors_bl = linear_eval_fast(100, model_bl, train_loader_ft, test_loader_ft, device)
             e_bl.append(errors_bl.reshape(1,-1))
         e_bl = np.concatenate(e_bl, axis=0).mean(axis=0)
 
@@ -80,8 +80,8 @@ def main(args):
         if evaluation == 'linear':
 
             e = []
-            for i in tqdm(range(30)):
-                _, errors = linear_eval_fast(100, model, train_loader, test_loader, device)
+            for i in tqdm(range(10)):
+                _, errors = linear_eval_fast(100, model, train_loader_ft, test_loader_ft, device)
                 e.append(errors.reshape(1,-1))
             e = np.concatenate(e, axis=0).mean(axis=0)
 
