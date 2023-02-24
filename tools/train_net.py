@@ -33,8 +33,8 @@ def train_one_epoch(model, dataloader, criterion, optimizer, device):
     avg_loss = torch.tensor(losses).mean()
     return avg_loss
 
-def train(epochs, lr, l, train_loader, device):
-    model = Tempo34RGB().to(device)
+def train(epochs, lr, l, train_loader, pretrain, device):
+    model = Tempo34RGB(pretrain=pretrain).to(device)
     criterion = BarlowTwinsLoss(lambda_param=l)
     optimizer = torch.optim.SGD(model.parameters(), lr=lr, weight_decay=0.001)
 
@@ -65,23 +65,23 @@ def main(args):
 
         e_bl = []
         for i in tqdm(range(10)):
-            _, errors_bl = linear_eval_fast(100, model_bl, train_loader_ft, test_loader_ft, device)
+            _, errors_bl = linear_eval_fast(500, model_bl, train_loader_ft, test_loader_ft, device)
             e_bl.append(errors_bl.reshape(1,-1))
         e_bl = np.concatenate(e_bl, axis=0).mean(axis=0)
 
-        writer = SummaryWriter()
+        writer = SummaryWriter('runs/hand_2')
         for i in np.arange(len(e_bl)):
             writer.add_scalar('error', e_bl[i], i)
         writer.close()
 
     else:
-        model = train(epochs, lr, l, train_loader, device)
+        model = train(epochs, lr, l, train_loader, pretrain=True, device=device)
 
         if evaluation == 'linear':
 
             e = []
             for i in tqdm(range(10)):
-                _, errors = linear_eval_fast(100, model, train_loader_ft, test_loader_ft, device)
+                _, errors = linear_eval_fast(500, model, train_loader_ft, test_loader_ft, device)
                 e.append(errors.reshape(1,-1))
             e = np.concatenate(e, axis=0).mean(axis=0)
 

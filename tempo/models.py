@@ -19,9 +19,14 @@ class Tempo34(nn.Module):
         return z
 
 class Tempo34RGB(nn.Module):
-    def __init__(self) -> None:
+    def __init__(self, pretrain=True) -> None:
         super(Tempo34RGB, self).__init__()
-        resnet = resnet34(ResNet34_Weights.IMAGENET1K_V1)
+        
+        if pretrain:
+            resnet = resnet34(ResNet34_Weights.IMAGENET1K_V1)
+        else:
+            resnet = resnet34()
+
         self.backbone = nn.Sequential(*list(resnet.children())[:-1])
         self.projection_head = BarlowTwinsProjectionHead(512, 1024, 1024)
 
