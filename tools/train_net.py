@@ -10,7 +10,7 @@ from torchvision import transforms as T
 from lightly.loss import BarlowTwinsLoss
 
 from tempo.models import Tempo34RGB, BaselineRGB
-from tempo.data.datasets import hand_dataset, hand_dataset_2, hand_dataset_2_ft
+from tempo.data.datasets import hand_dataset, hand_dataset_2, hand_dataset_2_ft, hand_dataset_blk, hand_dataset_blk_ft
 
 from linear_eval import linear_eval_fast, linear_eval
 
@@ -50,6 +50,7 @@ def main(args):
     evaluation = args.eval if args.eval else 'linear'
     baseline = args.baseline if args.baseline else False
     proximity = args.proximity if args.proximity else 30
+    save_model = args.save_model
 
     print(proximity)
     train_loader = hand_dataset_2(train=True, proximity=proximity)
@@ -69,10 +70,13 @@ def main(args):
             e_bl.append(errors_bl.reshape(1,-1))
         e_bl = np.concatenate(e_bl, axis=0).mean(axis=0)
 
-        writer = SummaryWriter('runs/hand_2')
+        writer = SummaryWriter()
         for i in np.arange(len(e_bl)):
             writer.add_scalar('error', e_bl[i], i)
         writer.close()
+
+        if save_model:
+            torch.save(model_bl.state_dict(), f"model_zoo/{save_model}")
 
     else:
         model = train(epochs, lr, l, train_loader, pretrain=True, device=device)
@@ -90,6 +94,9 @@ def main(args):
                 writer.add_scalar('error', e[i], i)
             writer.close()
 
+        if save_model:
+            torch.save(model.state_dict(), f"model_zoo/{save_model}")
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--epochs', type=int, required=False)
@@ -98,6 +105,7 @@ if __name__ == '__main__':
     parser.add_argument('--eval', type=str, required=False)
     parser.add_argument('--baseline', type=bool, required=False)
     parser.add_argument('--proximity', type=int, required=False)
+    parser.add_argument('--save_model', type=str, required=False)
 
     args = parser.parse_args()
 

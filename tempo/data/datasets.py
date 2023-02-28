@@ -25,7 +25,19 @@ def hand_dataset_2(batch_size=80, proximity=30, train=True):
     return dataloader
 
 def hand_dataset_2_ft(batch_size=80, train=True):
-    dataset = FinetuneDataset('./datasets/hand_2', transform=transform, train=train)
+    dataset = FinetuneDataset('./datasets/hand_2', split_at=6617, transform=transform, train=train)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=8)
+
+    return dataloader
+
+def hand_dataset_blk(batch_size=80, proximity=30, train=True):
+    dataset = TempoDataset('./datasets/hand_blk', transform=transform, proximity=proximity, train=train)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=8)
+
+    return dataloader
+
+def hand_dataset_blk_ft(batch_size=80, train=True):
+    dataset = FinetuneDataset('./datasets/hand_blk',split_at=1389, transform=transform, train=train)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=8)
 
     return dataloader

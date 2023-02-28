@@ -11,12 +11,12 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import ImageGrid
 
 class FinetuneDataset(Dataset):
-    def __init__(self, path, transform=None, train=True) -> None:
+    def __init__(self, path, split_at:int, transform=None, train=True) -> None:
         self.train = train
         self.transform = transform
 
         total_len = len([p for p in os.listdir(path) if not p.endswith('.txt')])
-        train_len = round(total_len*0.8)
+        train_len = split_at
 
         # get annotations
         self.label_map = {}
