@@ -6,6 +6,8 @@ import torch
 from torch.utils.data import DataLoader
 from torchvision import transforms as T
 
+import numpy as np
+
 transform = T.Compose([
     T.Resize(128),
     T.ToTensor(),
@@ -24,8 +26,13 @@ def hand_dataset_2(batch_size=80, proximity=30, train=True):
 
     return dataloader
 
-def hand_dataset_2_ft(batch_size=80, train=True):
+def hand_dataset_2_ft(batch_size=80, train=True, subset=None):
     dataset = FinetuneDataset('./datasets/hand_2', split_at=6617, transform=transform, train=train)
+
+    if subset:
+        ss_indices = np.random.choice(len(dataset), 100, replace=False)
+        dataset = torch.utils.data.Subset(dataset, ss_indices)
+
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=8)
 
     return dataloader

@@ -55,7 +55,7 @@ def main(args):
     print(proximity)
     train_loader = hand_dataset_2(train=True, proximity=proximity)
 
-    train_loader_ft = hand_dataset_2_ft(train=True)
+    train_loader_ft = hand_dataset_2_ft(train=True, subset=100)
     test_loader_ft = hand_dataset_2_ft(train=False)
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
