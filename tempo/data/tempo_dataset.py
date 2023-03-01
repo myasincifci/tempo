@@ -11,14 +11,14 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import ImageGrid
 
 class TempoDataset(Dataset):
-    def __init__(self, path, transform=None, proximity:int=3, train=True) -> None:
+    def __init__(self, path, transform=None, proximity:int=3, train=True, split_at=5970) -> None:
         self.train = train
         self.p = proximity
         self.transform = transform
         self.image_paths = sorted([os.path.join(path, p) for p in os.listdir(path) if not p.endswith('.txt')])
 
         self.total_len = len(self.image_paths)
-        self.train_len = round(self.total_len*0.8)
+        self.train_len = round(split_at)
         self.test_len  = round(self.total_len - self.train_len)
 
         self.label_map = {}

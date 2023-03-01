@@ -30,7 +30,7 @@ def test_model_fast(model, test_reps, test_dataset, device):
 
     wrongly_classified = 0
     for repr, label in test_reps:
-        total = repr.shape[0]#len(repr[0])
+        total = repr.shape[0]
 
         inputs,labels = repr.to(device), label.to(device)
 
@@ -71,7 +71,7 @@ def linear_eval_fast(epochs, model, train_loader, test_loader, device):
         test_reps.append((repr, label.to(device)))
 
     # for repr, label in reps:
-    eval_model = LinearEvalHead(out_features=3).to(device)
+    eval_model = LinearEvalHead(out_features=10).to(device)
 
     criterion = nn.CrossEntropyLoss().cuda()
     optimizer = torch.optim.SGD(eval_model.parameters(), lr=0.01)
@@ -80,7 +80,7 @@ def linear_eval_fast(epochs, model, train_loader, test_loader, device):
     for epoch in range(epochs):
         running_loss = 0.0
         for repr, label in reps:
-            labels = nn.functional.one_hot(label, num_classes=3).float()
+            labels = nn.functional.one_hot(label, num_classes=10).float()
             inputs, labels = repr.to(device), labels.to(device)
 
             optimizer.zero_grad()

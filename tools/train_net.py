@@ -10,7 +10,7 @@ from torchvision import transforms as T
 from lightly.loss import BarlowTwinsLoss
 
 from tempo.models import Tempo34RGB, BaselineRGB
-from tempo.data.datasets import hand_dataset, hand_dataset_2, hand_dataset_2_ft, hand_dataset_blk, hand_dataset_blk_ft
+from tempo.data.datasets import video_dataset, finetune_dataset
 
 from linear_eval import linear_eval_fast, linear_eval
 
@@ -53,16 +53,16 @@ def main(args):
     save_model = args.save_model
 
     print(proximity)
-    train_loader = hand_dataset_2(train=True, proximity=proximity)
+    train_loader = video_dataset(train=True, proximity=proximity)
 
-    train_loader_ft = hand_dataset_2_ft(train=True, subset=100)
-    test_loader_ft = hand_dataset_2_ft(train=False)
+    train_loader_ft = finetune_dataset(train=True, batch_size=10)
+    test_loader_ft = finetune_dataset(train=False, batch_size=10)
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f'Using device: {device}.')
 
     if baseline:
-        model_bl = BaselineRGB(out_features=3, freeze_backbone=True, pretrain=True).to(device)
+        model_bl = BaselineRGB(out_features=10, freeze_backbone=True, pretrain=True).to(device)
 
         e_bl = []
         for i in tqdm(range(10)):
