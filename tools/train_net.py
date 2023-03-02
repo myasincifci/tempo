@@ -53,7 +53,7 @@ def main(args):
     save_model = args.save_model
 
     print(proximity)
-    train_loader = video_dataset(train=True, proximity=proximity)
+    train_loader = video_dataset(proximity=proximity)
 
     train_loader_ft = finetune_dataset(train=True, batch_size=10)
     test_loader_ft = finetune_dataset(train=False, batch_size=10)

@@ -15,8 +15,8 @@ transform = T.Compose([
     T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
 ])
 
-def video_dataset(batch_size=80, proximity=30, train=True):
-    dataset = TempoDataset('./datasets/asl', transform=transform, proximity=proximity, train=train)
+def video_dataset(batch_size=80, proximity=30):
+    dataset = TempoDataset('./datasets/asl', transform=transform, proximity=proximity)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=8)
 
     return dataloader

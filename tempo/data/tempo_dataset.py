@@ -11,15 +11,10 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import ImageGrid
 
 class TempoDataset(Dataset):
-    def __init__(self, path, transform=None, proximity:int=3, train=True, split_at=5970) -> None:
-        self.train = train
+    def __init__(self, path, transform=None, proximity:int=3) -> None:
         self.p = proximity
         self.transform = transform
         self.image_paths = sorted([os.path.join(path, p) for p in os.listdir(path) if not p.endswith('.txt')])
-
-        self.total_len = len(self.image_paths)
-        self.train_len = round(split_at)
-        self.test_len  = round(self.total_len - self.train_len)
 
         self.label_map = {}
         with open(os.path.join(path, 'annotations.txt')) as f:
@@ -30,15 +25,9 @@ class TempoDataset(Dataset):
                     self.label_map[i] = l
 
     def __len__(self) -> int:
-
-        if self.train:
-            return self.train_len 
-        else:
-            return self.test_len
+        return len(self.image_paths)
 
     def __getitem__(self, index) -> Tuple[torch.Tensor, torch.Tensor]:
-        offset = 0 if self.train else self.train_len
-        index = index + offset
 
         # 1. get one element x
         image = Image.open(self.image_paths[index])
