@@ -9,10 +9,10 @@ from torch.utils.data import DataLoader
 from torchvision import transforms as T
 from lightly.loss import BarlowTwinsLoss
 
-from tempo.models import Tempo34RGB, BaselineRGB, NewBaseline, NewTempoLinear
+from tempo.models import Tempo34RGB, NewBaseline, NewTempoLinear
 from tempo.data.datasets import video_dataset, finetune_dataset
 
-from linear_eval import linear_eval_fast, linear_eval, linear_eval_new
+from linear_eval import linear_eval_new
 
 from torch.utils.tensorboard import SummaryWriter
 
