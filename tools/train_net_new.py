@@ -9,10 +9,10 @@ from torch.utils.data import DataLoader
 from torchvision import transforms as T
 from lightly.loss import BarlowTwinsLoss
 
-from tempo.models import Tempo34RGB, BaselineRGB
+from tempo.models import Tempo34RGB, BaselineRGB, NewBaseline, NewTempoLinear
 from tempo.data.datasets import video_dataset, finetune_dataset
 
-from linear_eval import linear_eval_fast, linear_eval
+from linear_eval import linear_eval_fast, linear_eval, linear_eval_new
 
 from torch.utils.tensorboard import SummaryWriter
 
@@ -41,7 +41,7 @@ def train(epochs, lr, l, train_loader, pretrain, device):
     for epoch in range(epochs):
         train_one_epoch(model, train_loader, criterion, optimizer, device)
 
-    return model
+    return model.backbone.state_dict()
 
 def main(args):
     # Parse commandline-arguments
@@ -63,44 +63,32 @@ def main(args):
     print(f'Using device: {device}.')
 
     # Parameters for finetuning
-    num_runs = 100
+    num_runs = 10
     num_epochs = 300
 
+    # Choose model
     if baseline:
-        model_bl = BaselineRGB(out_features=10, freeze_backbone=True, pretrain=True).to(device)
-
-        e_bl = []
-        for i in tqdm(range(num_runs)):
-            _, errors_bl = linear_eval_fast(num_epochs, model_bl, train_loader_ft, test_loader_ft, device)
-            e_bl.append(errors_bl.reshape(1,-1))
-        e_bl = np.concatenate(e_bl, axis=0).mean(axis=0)
-
-        writer = SummaryWriter()
-        for i in np.arange(len(e_bl)):
-            writer.add_scalar('error', e_bl[i], i)
-        writer.close()
-
-        if save_model:
-            torch.save(model_bl.state_dict(), f"model_zoo/{save_model}")
-
+        model = NewBaseline(out_features=10, pretrain=True).to(device)
     else:
-        model = train(epochs, lr, l, train_loader, pretrain=True, device=device)
+        weights = train(epochs, lr, l, train_loader, pretrain=True, device=device)
+        model = NewTempoLinear(weights, out_features=10).to(device)
 
-        if evaluation == 'linear':
+    # Finetune model 
+    e = []
+    for i in tqdm(range(num_runs)):
+        _, errors = linear_eval_new(num_epochs, model, train_loader_ft, test_loader_ft, device)
+        e.append(errors.reshape(1,-1))
+    e = np.concatenate(e, axis=0).mean(axis=0)
 
-            e = []
-            for i in tqdm(range(num_runs)):
-                _, errors = linear_eval_fast(num_epochs, model, train_loader_ft, test_loader_ft, device)
-                e.append(errors.reshape(1,-1))
-            e = np.concatenate(e, axis=0).mean(axis=0)
+    # Write to tensorboard
+    writer = SummaryWriter()
+    for i in np.arange(len(e)):
+        writer.add_scalar('error', e[i], i)
+    writer.close()
 
-            writer = SummaryWriter()
-            for i in np.arange(len(e)):
-                writer.add_scalar('error', e[i], i)
-            writer.close()
-
-        if save_model:
-            torch.save(model.state_dict(), f"model_zoo/{save_model}")
+    # Save model weights
+    if save_model:
+        torch.save(model.state_dict(), f"model_zoo/{save_model}")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
