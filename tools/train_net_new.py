@@ -8,11 +8,13 @@ import torch
 from torch.utils.data import DataLoader
 from torchvision import transforms as T
 from lightly.loss import BarlowTwinsLoss
+from torchvision.models import ResNet34_Weights
 
-from tempo.models import Tempo34RGB, NewBaseline, NewTempoLinear
+from tempo.models import Tempo34RGB, NewBaseline, NewTempoLinear, get_resnet_weights
 from tempo.data.datasets import video_dataset, finetune_dataset
 
 from linear_eval import linear_eval_new
+from semi_sup_eval import semi_sup_eval
 
 from torch.utils.tensorboard import SummaryWriter
 
@@ -45,11 +47,11 @@ def train(epochs, lr, l, train_loader, pretrain, device):
 
 def main(args):
     # Parse commandline-arguments
-    epochs = args.epochs if args.epochs else 5
+    epochs = args.epochs if args.epochs else 1
     lr = args.lr if args.lr else 1e-3
     l = args.l if args.l else 1e-3
-    evaluation = args.eval if args.eval else 'linear'
-    baseline = args.baseline if args.baseline else False
+    evaluation = args.eval if args.eval else 'finetune'
+    baseline = args.baseline if args.baseline else True
     proximity = args.proximity if args.proximity else 30
     save_model = args.save_model
 
@@ -68,17 +70,29 @@ def main(args):
 
     # Choose model
     if baseline:
+        weights = get_resnet_weights()
         model = NewBaseline(out_features=10, pretrain=True).to(device)
     else:
         weights = train(epochs, lr, l, train_loader, pretrain=True, device=device)
         model = NewTempoLinear(weights, out_features=10).to(device)
 
     # Finetune model 
-    e = []
-    for i in tqdm(range(num_runs)):
-        _, errors = linear_eval_new(num_epochs, model, train_loader_ft, test_loader_ft, device)
-        e.append(errors.reshape(1,-1))
-    e = np.concatenate(e, axis=0).mean(axis=0)
+    if evaluation == 'linear':
+        e = []
+        for i in tqdm(range(num_runs)):
+            _, errors = linear_eval_new(num_epochs, model, train_loader_ft, test_loader_ft, device)
+            e.append(errors.reshape(1,-1))
+        e = np.concatenate(e, axis=0).mean(axis=0)
+    
+    elif evaluation == 'finetune':
+        e = []
+        for i in tqdm(range(num_runs)):
+            _, errors = semi_sup_eval(num_epochs, weights, train_loader_ft, test_loader_ft, device)
+            e.append(errors.reshape(1,-1))
+        e = np.concatenate(e, axis=0).mean(axis=0)
+    
+    else:
+        e = []
 
     # Write to tensorboard
     writer = SummaryWriter()

@@ -34,7 +34,7 @@ class Dataset(Dataset):
         if self.transform:
             image = self.transform(image)
 
-        return (image, cls)
+        return (image, torch.tensor(cls))
 
 if __name__ == '__main__':
     transform = T.Compose([

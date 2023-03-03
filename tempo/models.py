@@ -63,3 +63,9 @@ class Tempo34RGB(nn.Module):
         x = self.backbone(x).flatten(start_dim=1)
         z = self.projection_head(x)
         return z
+
+def get_resnet_weights():
+    resnet = resnet34(weights=ResNet34_Weights.IMAGENET1K_V1)
+    backbone = nn.Sequential(*list(resnet.children())[:-1])
+
+    return backbone.state_dict()
