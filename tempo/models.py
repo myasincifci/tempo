@@ -8,7 +8,7 @@ class NewBaseline(nn.Module):
         super(NewBaseline, self).__init__()
 
         if pretrain:
-            resnet = resnet34(ResNet34_Weights.IMAGENET1K_V1)
+            resnet = resnet34(weights=ResNet34_Weights.IMAGENET1K_V1)
         else:
             resnet = resnet34()
         
@@ -52,7 +52,7 @@ class Tempo34RGB(nn.Module):
         super(Tempo34RGB, self).__init__()
         
         if pretrain:
-            resnet = resnet34(ResNet34_Weights.IMAGENET1K_V1)
+            resnet = resnet34(weights=ResNet34_Weights.IMAGENET1K_V1)
         else:
             resnet = resnet34()
 

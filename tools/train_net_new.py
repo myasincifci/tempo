@@ -63,7 +63,7 @@ def main(args):
     print(f'Using device: {device}.')
 
     # Parameters for finetuning
-    num_runs = 10
+    num_runs = 1
     num_epochs = 300
 
     # Choose model
