@@ -29,7 +29,7 @@ def semi_sup_eval(epochs, weights, train_loader, test_loader, device):
     optimizer = torch.optim.SGD(model.parameters(), lr=0.001)
 
     losses, errors = [], []
-    for epoch in range(epochs):
+    for epoch in tqdm(range(epochs)):
         running_loss = 0.0
         for img, label in train_loader:
             labels = nn.functional.one_hot(label, num_classes=10).float()

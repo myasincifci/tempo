@@ -57,7 +57,7 @@ def main(args):
 
     # Load datasets
     train_loader = video_dataset(proximity=proximity)
-    train_loader_ft = finetune_dataset(train=True, batch_size=10)
+    train_loader_ft = finetune_dataset(name='asl_finetune_20', train=True, batch_size=10)
     test_loader_ft = finetune_dataset(train=False, batch_size=10)
 
     # Use GPU if availabel
@@ -65,7 +65,7 @@ def main(args):
     print(f'Using device: {device}.')
 
     # Parameters for finetuning
-    num_runs = 1
+    num_runs = 10
     num_epochs = 100
 
     # Choose model
