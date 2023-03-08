@@ -26,7 +26,7 @@ def semi_sup_eval(epochs, weights, train_loader, test_loader, device):
     model = NewTempoLinear(out_features=10, weights=weights).to(device)
 
     criterion = nn.CrossEntropyLoss().cuda()
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.001)
 
     losses, errors = [], []
     for epoch in range(epochs):

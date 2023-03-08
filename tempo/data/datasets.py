@@ -22,7 +22,7 @@ def video_dataset(batch_size=80, proximity=30):
     return dataloader
 
 def finetune_dataset(batch_size=80, train=True):
-    dataset = Dataset('./datasets/asl_finetune', transform=transform, train=train)
+    dataset = Dataset('./datasets/asl_finetune_5', transform=transform, train=train)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=8)
 
     return dataloader

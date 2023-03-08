@@ -51,7 +51,7 @@ def main(args):
     lr = args.lr if args.lr else 1e-3
     l = args.l if args.l else 1e-3
     evaluation = args.eval if args.eval else 'finetune'
-    baseline = args.baseline if args.baseline else True
+    baseline = args.baseline if args.baseline else False
     proximity = args.proximity if args.proximity else 30
     save_model = args.save_model
 
@@ -66,7 +66,7 @@ def main(args):
 
     # Parameters for finetuning
     num_runs = 1
-    num_epochs = 300
+    num_epochs = 100
 
     # Choose model
     if baseline:
