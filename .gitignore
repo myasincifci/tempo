@@ -1,4 +1,4 @@
 /Tempo.egg-info
+/.vscode
 /build
-/datasets
-/model_zoo
+/datasets/old
