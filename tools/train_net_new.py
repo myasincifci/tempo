@@ -70,13 +70,12 @@ def main(args):
 
     # Choose model
     if baseline:
-        weights = get_resnet_weights()
         model = NewBaseline(out_features=10, pretrain=True).to(device)
     else:
         weights = train(epochs, lr, l, train_loader, pretrain=True, device=device)
         model = NewTempoLinear(weights, out_features=10).to(device)
 
-    # Finetune model 
+    # Train model 
     if evaluation == 'linear':
         e = []
         for i in tqdm(range(num_runs)):
