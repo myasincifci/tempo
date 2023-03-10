@@ -57,7 +57,7 @@ def main(args):
 
     # Load datasets
     train_loader = video_dataset(proximity=proximity)
-    train_loader_ft = finetune_dataset(name='asl_finetune_20', train=True, batch_size=10)
+    train_loader_ft = finetune_dataset(name='ASL-big', train=True, batch_size=10)
     test_loader_ft = finetune_dataset(train=False, batch_size=10)
 
     # Use GPU if availabel
@@ -73,7 +73,7 @@ def main(args):
         model = NewBaseline(out_features=10, pretrain=True).to(device)
     else:
         weights = train(epochs, lr, l, train_loader, pretrain=True, device=device)
-        model = NewTempoLinear(weights, out_features=10).to(device)
+        model = NewTempoLinear(weights, out_features=24).to(device)
 
     # Train model 
     if evaluation == 'linear':
@@ -101,7 +101,7 @@ def main(args):
 
     # Save model weights
     if save_model:
-        torch.save(model.state_dict(), f"model_zoo/{save_model}")
+        torch.save(model.state_dict(), f"model_zoo/{save_model}") # TODO: cant save models evaluated with finetune because only passing weights
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

@@ -45,7 +45,7 @@ def test_model(model, test_dataset, testloader, device):
 
 def linear_eval_new(epochs, model, train_loader, test_loader, device):
 
-    model.linear = nn.Linear(in_features=512, out_features=10, bias=True).to(device) # Fresh detection head
+    model.linear = nn.Linear(in_features=512, out_features=24, bias=True).to(device) # Fresh detection head
 
     reps = []
     test_reps = []
@@ -67,7 +67,7 @@ def linear_eval_new(epochs, model, train_loader, test_loader, device):
     for epoch in range(epochs):
         running_loss = 0.0
         for repr, label in reps:
-            labels = nn.functional.one_hot(label, num_classes=10).float()
+            labels = nn.functional.one_hot(label, num_classes=24).float()
             inputs, labels = repr.to(device), labels.to(device)
 
             optimizer.zero_grad()

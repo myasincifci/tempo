@@ -16,14 +16,6 @@ class TempoDataset(Dataset):
         self.transform = transform
         self.image_paths = sorted([os.path.join(path, p) for p in os.listdir(path) if not p.endswith('.txt')])
 
-        self.label_map = {}
-        with open(os.path.join(path, 'annotations.txt')) as f:
-            for l in f.readlines():
-                a, b, l = list(map(int, l.strip().split(',')))
-
-                for i in range(a,b):
-                    self.label_map[i] = l
-
     def __len__(self) -> int:
         return len(self.image_paths)
 
@@ -38,21 +30,12 @@ class TempoDataset(Dataset):
         index_d = np.random.choice(list(possbile_l) + list(possbile_r))
         image_d = Image.open(self.image_paths[index_d])
 
-        cls = self.get_class(index)
-        cls_d = self.get_class(index_d)
-
         if self.transform:
             image = self.transform(image)
             image_d = self.transform(image_d)
 
         # 3. return (x, x')
-        return (image, image_d, cls, cls_d)
-
-    def get_class(self, index):
-        try:
-            return self.label_map[index]
-        except KeyError:
-            return 3
+        return (image, image_d, torch.tensor(0), torch.tensor(0))
 
 if __name__ == '__main__':
     transform = T.Compose([
