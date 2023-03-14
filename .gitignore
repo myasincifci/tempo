@@ -3,3 +3,5 @@
 /build
 /datasets/old
 /datasets/ASL-big
+/xai/asl_images
+/xai/asl_images_old

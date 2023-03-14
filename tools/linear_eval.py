@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 from torch.utils.tensorboard import SummaryWriter
+import matplotlib.pyplot as plt
 
 
 from tempo.data.datasets import finetune_dataset
@@ -25,23 +26,23 @@ def test_model_fast(model, test_reps, test_dataset, device):
         wrong = (total - (preds == labels).sum()).item()
         wrongly_classified += wrong
 
-    return wrongly_classified / len(test_dataset)
+    return 1.0 - (wrongly_classified / len(test_dataset))
 
-def test_model(model, test_dataset, testloader, device):
+# def test_model(model, test_dataset, testloader, device):
 
-    wrongly_classified = 0
-    for i, data in enumerate(testloader, 0):
-        total = len(data[0])
-        inputs, _, labels, _ = data
-        inputs,labels = inputs.to(device), labels.to(device)
+#     wrongly_classified = 0
+#     for i, data in enumerate(testloader, 0):
+#         total = len(data[0])
+#         inputs, _, labels, _ = data
+#         inputs,labels = inputs.to(device), labels.to(device)
 
-        with torch.no_grad():
-            preds = model(inputs).argmax(dim=1)
+#         with torch.no_grad():
+#             preds = model(inputs).argmax(dim=1)
 
-        wrong = (total - (preds == labels).sum()).item()
-        wrongly_classified += wrong
+#         wrong = (total - (preds == labels).sum()).item()
+#         wrongly_classified += wrong
 
-    return wrongly_classified / len(test_dataset)
+#     return wrongly_classified / len(test_dataset)
 
 def linear_eval_new(epochs, model, train_loader, test_loader, device):
 
@@ -89,9 +90,11 @@ def linear_eval_new(epochs, model, train_loader, test_loader, device):
 def main(args):
     # Parse commandline-arguments
     path = args.path
+    runs = args.runs if args.runs else 10
+    make_plot = args.make_plot if args.make_plot else False
 
     # Load datasets
-    train_loader_ft = finetune_dataset(name='asl_finetune_20', train=True, batch_size=10)
+    train_loader_ft = finetune_dataset(name='ASL-big', train=True, batch_size=10)
     test_loader_ft = finetune_dataset(train=False, batch_size=10)
 
     # Use GPU if availabel
@@ -99,31 +102,41 @@ def main(args):
     print(f'Using device: {device}.')
 
     # Parameters for finetuning
-    num_runs = 10
     num_epochs = 100
 
     # Load model from path
     weights = torch.load(path)
-    model = NewTempoLinear(out_features=10, weights=None,freeze_backbone=True)
+    model = NewTempoLinear(out_features=24, weights=None,freeze_backbone=True)
     model.load_state_dict(weights)
     model.to(device)
 
     # Train model 
     e = []
-    for i in tqdm(range(num_runs)):
+    for i in tqdm(range(runs)):
         _, errors = linear_eval_new(num_epochs, model, train_loader_ft, test_loader_ft, device)
         e.append(errors.reshape(1,-1))
-    e = np.concatenate(e, axis=0).mean(axis=0)
+    e = np.concatenate(e, axis=0)    
+    e_mean = e.mean(axis=0)
+    e_std = e.std(axis=0)
 
     # Write to tensorboard
     writer = SummaryWriter()
-    for i in np.arange(len(e)):
-        writer.add_scalar('error', e[i], i)
+    for i in np.arange(len(e_mean)):
+        writer.add_scalar('error', e_mean[i], i)
     writer.close()
+
+    # Make plot
+    if make_plot:
+        X = torch.arange(1, len(e_mean)+1)
+        plt.plot(X, e_mean)
+        plt.fill_between(X, e_mean-e_std, e_mean+e_std)
+        plt.show()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--path', type=str, required=False)
+    parser.add_argument('--runs', type=int, required=False)
+    parser.add_argument('--make_plot', type=bool, required=False)
 
     args = parser.parse_args()
 
