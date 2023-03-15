@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import ImageGrid
 
 class Dataset(Dataset):
-    def __init__(self, path, transform=None, train=True) -> None:
+    def __init__(self, path, transform=None, train=True, samples_pc=None) -> None:
         self.transform = transform
 
         class_map = {
@@ -42,8 +42,15 @@ class Dataset(Dataset):
             }
 
         self.image_paths = []
-        split = 'train' if train else 'test'
         
+        if train:
+            if samples_pc == None:
+                split = 'train'
+            else:
+                split = 'train-' + str(samples_pc)
+        else:
+            split = 'test'
+
         for c in os.listdir(os.path.join(path, split)):
             for name in os.listdir(os.path.join(path, split,c)):
                 p = os.path.join(path, split, c, name)

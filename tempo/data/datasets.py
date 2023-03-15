@@ -21,8 +21,8 @@ def video_dataset(batch_size=80, proximity=30):
 
     return dataloader
 
-def finetune_dataset(name='ASL-big', batch_size=80, train=True):
-    dataset = Dataset(f'./datasets/{name}', transform=transform, train=train)
+def finetune_dataset(name='ASL-big', batch_size=80, train=True, samples_pc=None):
+    dataset = Dataset(f'./datasets/{name}', transform=transform, train=train, samples_pc=samples_pc)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=2)
 
     return dataloader

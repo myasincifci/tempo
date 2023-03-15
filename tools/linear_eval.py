@@ -1,3 +1,4 @@
+import os
 import argparse
 
 from tqdm import tqdm
@@ -27,22 +28,6 @@ def test_model_fast(model, test_reps, test_dataset, device):
         wrongly_classified += wrong
 
     return 1.0 - (wrongly_classified / len(test_dataset))
-
-# def test_model(model, test_dataset, testloader, device):
-
-#     wrongly_classified = 0
-#     for i, data in enumerate(testloader, 0):
-#         total = len(data[0])
-#         inputs, _, labels, _ = data
-#         inputs,labels = inputs.to(device), labels.to(device)
-
-#         with torch.no_grad():
-#             preds = model(inputs).argmax(dim=1)
-
-#         wrong = (total - (preds == labels).sum()).item()
-#         wrongly_classified += wrong
-
-#     return wrongly_classified / len(test_dataset)
 
 def linear_eval_new(epochs, model, train_loader, test_loader, device):
 
@@ -89,12 +74,13 @@ def linear_eval_new(epochs, model, train_loader, test_loader, device):
 
 def main(args):
     # Parse commandline-arguments
-    path = args.path
+    path: str = args.path
+    name: str = args.name
     runs = args.runs if args.runs else 10
     make_plot = args.make_plot if args.make_plot else False
 
     # Load datasets
-    train_loader_ft = finetune_dataset(name='ASL-big', train=True, batch_size=10)
+    train_loader_ft = finetune_dataset(name='ASL-big', train=True, batch_size=10, samples_pc=1)
     test_loader_ft = finetune_dataset(train=False, batch_size=10)
 
     # Use GPU if availabel
@@ -120,9 +106,10 @@ def main(args):
     e_std = e.std(axis=0)
 
     # Write to tensorboard
-    writer = SummaryWriter()
+    log_dir = os.path.join("runs", name) if name else None
+    writer = SummaryWriter(log_dir)
     for i in np.arange(len(e_mean)):
-        writer.add_scalar('error', e_mean[i], i)
+        writer.add_scalar('accuracy', e_mean[i], i)
     writer.close()
 
     # Make plot
@@ -137,6 +124,7 @@ if __name__ == '__main__':
     parser.add_argument('--path', type=str, required=False)
     parser.add_argument('--runs', type=int, required=False)
     parser.add_argument('--make_plot', type=bool, required=False)
+    parser.add_argument('--name', type=str, required=False)
 
     args = parser.parse_args()
 
