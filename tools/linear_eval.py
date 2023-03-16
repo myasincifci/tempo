@@ -29,7 +29,7 @@ def test_model_fast(model, test_reps, test_dataset, device):
 
     return 1.0 - (wrongly_classified / len(test_dataset))
 
-def linear_eval_new(epochs, model, train_loader, test_loader, device):
+def linear_eval_new(iterations, model, train_loader, test_loader, device):
 
     model.linear = nn.Linear(in_features=512, out_features=24, bias=True).to(device) # Fresh detection head
 
@@ -49,8 +49,30 @@ def linear_eval_new(epochs, model, train_loader, test_loader, device):
     criterion = nn.CrossEntropyLoss().cuda()
     optimizer = torch.optim.SGD(model.linear.parameters(), lr=0.01)
 
-    losses, errors = [], []
-    for epoch in range(epochs):
+    # losses, errors = [], []
+    # for epoch in range(epochs):
+    #     running_loss = 0.0
+    #     for repr, label in reps:
+    #         labels = nn.functional.one_hot(label, num_classes=24).float()
+    #         inputs, labels = repr.to(device), labels.to(device)
+
+    #         optimizer.zero_grad()
+
+    #         outputs = model.linear(inputs)
+    #         loss = criterion(outputs, labels)
+    #         loss.backward()
+    #         optimizer.step()
+
+    #         running_loss += loss.item()
+
+    #     test_error = test_model_fast(model.linear, test_reps, test_loader.dataset, device)
+    #     losses.append(running_loss)
+    #     errors.append(test_error)
+    # losses, errors = np.array(losses), np.array(errors)
+
+    losses, errors, iters = [], [], []
+    i = 0
+    while True:
         running_loss = 0.0
         for repr, label in reps:
             labels = nn.functional.one_hot(label, num_classes=24).float()
@@ -64,23 +86,32 @@ def linear_eval_new(epochs, model, train_loader, test_loader, device):
             optimizer.step()
 
             running_loss += loss.item()
+            i += 1
+
+            if i == iterations:
+                break
 
         test_error = test_model_fast(model.linear, test_reps, test_loader.dataset, device)
         losses.append(running_loss)
         errors.append(test_error)
-    losses, errors = np.array(losses), np.array(errors)
+        iters.append(i)
 
-    return (losses, errors)
+        if i == iterations:
+                break
+    losses, errors, iters = np.array(losses), np.array(errors), np.array(iters)
+
+    return (losses, errors, iters)
 
 def main(args):
     # Parse commandline-arguments
     path: str = args.path
     name: str = args.name
-    runs = args.runs if args.runs else 10
-    make_plot = args.make_plot if args.make_plot else False
+    runs: int = args.runs if args.runs else 10
+    make_plot: bool = args.make_plot if args.make_plot else False
+    samples_pc: int = args.samples_pc
 
     # Load datasets
-    train_loader_ft = finetune_dataset(name='ASL-big', train=True, batch_size=10, samples_pc=1)
+    train_loader_ft = finetune_dataset(name='ASL-big', train=True, batch_size=10, samples_pc=samples_pc)
     test_loader_ft = finetune_dataset(train=False, batch_size=10)
 
     # Use GPU if availabel
@@ -88,7 +119,7 @@ def main(args):
     print(f'Using device: {device}.')
 
     # Parameters for finetuning
-    num_epochs = 100
+    iterations = 3_000
 
     # Load model from path
     weights = torch.load(path)
@@ -98,18 +129,19 @@ def main(args):
 
     # Train model 
     e = []
+    iters = None
     for i in tqdm(range(runs)):
-        _, errors = linear_eval_new(num_epochs, model, train_loader_ft, test_loader_ft, device)
+        _, errors, iters = linear_eval_new(iterations, model, train_loader_ft, test_loader_ft, device)
         e.append(errors.reshape(1,-1))
     e = np.concatenate(e, axis=0)    
     e_mean = e.mean(axis=0)
     e_std = e.std(axis=0)
 
     # Write to tensorboard
-    log_dir = os.path.join("runs", name) if name else None
+    log_dir = os.path.join("runs", name, str(samples_pc)) if name else None
     writer = SummaryWriter(log_dir)
     for i in np.arange(len(e_mean)):
-        writer.add_scalar('accuracy', e_mean[i], i)
+        writer.add_scalar('accuracy', e_mean[i], iters[i])
     writer.close()
 
     # Make plot
@@ -125,6 +157,7 @@ if __name__ == '__main__':
     parser.add_argument('--runs', type=int, required=False)
     parser.add_argument('--make_plot', type=bool, required=False)
     parser.add_argument('--name', type=str, required=False)
+    parser.add_argument('--samples_pc', type=int, required=False)
 
     args = parser.parse_args()
 
