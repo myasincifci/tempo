@@ -19,7 +19,7 @@ def test_model_fast(model, test_reps, test_dataset, device):
     for repr, label in test_reps:
         total = repr.shape[0]
 
-        inputs,labels = repr.to(device), label.to(device)
+        inputs, labels = repr.to(device), label.to(device)
 
         with torch.no_grad():
             preds = model(inputs).argmax(dim=1)
@@ -29,9 +29,11 @@ def test_model_fast(model, test_reps, test_dataset, device):
 
     return 1.0 - (wrongly_classified / len(test_dataset))
 
+
 def linear_eval_new(iterations, model, train_loader, test_loader, device):
 
-    model.linear = nn.Linear(in_features=512, out_features=24, bias=True).to(device) # Fresh detection head
+    model.linear = nn.Linear(in_features=512, out_features=24, bias=True).to(
+        device)  # Fresh detection head
 
     reps = []
     test_reps = []
@@ -97,7 +99,7 @@ def linear_eval_new(iterations, model, train_loader, test_loader, device):
         iters.append(i)
 
         if i == iterations:
-                break
+            break
     losses, errors, iters = np.array(losses), np.array(errors), np.array(iters)
 
     return (losses, errors, iters)
@@ -107,7 +109,6 @@ def main(args):
     path: str = args.path
     name: str = args.name
     runs: int = args.runs if args.runs else 10
-    make_plot: bool = args.make_plot if args.make_plot else False
     samples_pc: int = args.samples_pc
 
     # Load datasets
@@ -123,17 +124,18 @@ def main(args):
 
     # Load model from path
     weights = torch.load(path)
-    model = NewTempoLinear(out_features=24, weights=None,freeze_backbone=True)
+    model = NewTempoLinear(out_features=24, weights=None, freeze_backbone=True)
     model.load_state_dict(weights)
     model.to(device)
 
-    # Train model 
+    # Train model
     e = []
     iters = None
     for i in tqdm(range(runs)):
-        _, errors, iters = linear_eval_new(iterations, model, train_loader_ft, test_loader_ft, device)
-        e.append(errors.reshape(1,-1))
-    e = np.concatenate(e, axis=0)    
+        _, errors, iters = linear_eval_new(
+            iterations, model, train_loader_ft, test_loader_ft, device)
+        e.append(errors.reshape(1, -1))
+    e = np.concatenate(e, axis=0)
     e_mean = e.mean(axis=0)
     e_std = e.std(axis=0)
 
@@ -151,11 +153,11 @@ def main(args):
         plt.fill_between(X, e_mean-e_std, e_mean+e_std)
         plt.show()
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--path', type=str, required=False)
     parser.add_argument('--runs', type=int, required=False)
-    parser.add_argument('--make_plot', type=bool, required=False)
     parser.add_argument('--name', type=str, required=False)
     parser.add_argument('--samples_pc', type=int, required=False)
 
