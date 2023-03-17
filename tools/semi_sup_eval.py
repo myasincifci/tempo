@@ -23,7 +23,7 @@ def test_model(model, testloader, device):
         wrong = (total - (preds == labels).sum()).item()
         wrongly_classified += wrong
 
-    return wrongly_classified / len(testloader.dataset)
+    return 1 - (wrongly_classified / len(testloader.dataset))
 
 def semi_sup_eval(iterations, weights, train_loader, test_loader, device):
     
@@ -99,7 +99,7 @@ def main(args):
     # Write to tensorboard
     writer = SummaryWriter()
     for i in np.arange(len(e)):
-        writer.add_scalar('error', e[i], iters[i])
+        writer.add_scalar('accuracy', e[i], iters[i])
     writer.close()
 
 if __name__ == '__main__':
