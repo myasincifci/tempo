@@ -146,14 +146,6 @@ def main(args):
         writer.add_scalar('accuracy', e_mean[i], iters[i])
     writer.close()
 
-    # Make plot
-    if make_plot:
-        X = torch.arange(1, len(e_mean)+1)
-        plt.plot(X, e_mean)
-        plt.fill_between(X, e_mean-e_std, e_mean+e_std)
-        plt.show()
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--path', type=str, required=False)
