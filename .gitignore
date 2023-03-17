@@ -1,7 +1,6 @@
 /Tempo.egg-info
 /.vscode
 /build
-/datasets/old
-/datasets/ASL-big
+/datasets
 /xai/asl_images
 /xai/asl_images_old
