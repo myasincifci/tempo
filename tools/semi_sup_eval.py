@@ -97,9 +97,10 @@ def main(args):
     e = np.concatenate(e, axis=0).mean(axis=0)
 
     # Write to tensorboard
-    writer = SummaryWriter()
-    for i in np.arange(len(e)):
-        writer.add_scalar('accuracy', e[i], iters[i])
+    log_dir = os.path.join("runs", name, str(samples_pc)) if name else None
+    writer = SummaryWriter(log_dir)
+    for i in np.arange(len(e_mean)):
+        writer.add_scalar('accuracy', e_mean[i], iters[i])
     writer.close()
 
 if __name__ == '__main__':
