@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #$ -binding linear:4 # request 4 cpus (8 with Hyperthreading) (some recommend 4 per GPU)
-#$ -N baseline       # set consistent base name for output and error file (allows for easy deletion alias)
+#$ -N tempo       # set consistent base name for output and error file (allows for easy deletion alias)
 #$ -q all.q    # don't fill the qlogin queue (can some add why and when to use?)
 #$ -cwd        # change working directory (to current)
 #$ -V          # provide environment variables
@@ -8,8 +8,8 @@
 #$ -l cuda=1   # request one GPU
 
 array=("x" "1" "5" "10" "15" "20")
-../env/bin/python tools/linear_eval.py \
-    --path model_zoo/baseline.pth \
+../env/bin/python tools/semi_sup_eval.py \
+    --path model_zoo/asl_big_e10_p30_run5.pth \
     --runs 100 \
-    --name linear_eval/baseline \
+    --name semi_sup_eval/tempo \
     --samples_pc "${array[$SGE_TASK_ID]}"
