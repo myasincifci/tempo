@@ -35,7 +35,7 @@ def finetune_dataset(name='ASL-big', batch_size=80, train=True, samples_pc=None)
 
 def finetune_dataset2(name='ASL-big', batch_size=80, train=True, samples_pc=None):
     dataset = Dataset(f'../datasets/{name}', transform=transform2, train=train, samples_pc=samples_pc)
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=2)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False, drop_last=False, num_workers=2)
 
     return dataloader
 
