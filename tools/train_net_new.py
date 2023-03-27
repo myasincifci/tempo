@@ -65,8 +65,8 @@ def main(args):
     print(f'Using device: {device}.')
 
     # Parameters for finetuning
-    num_runs = 10
-    num_epochs = 100
+    num_runs = 5
+    iterations = 3_000
 
     # Choose model
     if baseline:
@@ -79,24 +79,28 @@ def main(args):
     if evaluation == 'linear':
         e = []
         for i in tqdm(range(num_runs)):
-            _, errors = linear_eval_new(num_epochs, model, train_loader_ft, test_loader_ft, device)
+            _, errors, iters = linear_eval_new(iterations, model, train_loader_ft, test_loader_ft, device)
             e.append(errors.reshape(1,-1))
-        e = np.concatenate(e, axis=0).mean(axis=0)
+        e = np.concatenate(e, axis=0)
+        e_mean = e.mean(axis=0)
+        e_std = e.std(axis=0)
     
     elif evaluation == 'finetune':
         e = []
         for i in tqdm(range(num_runs)):
-            _, errors = semi_sup_eval(num_epochs, weights, train_loader_ft, test_loader_ft, device)
+            _, errors, iters = semi_sup_eval(iterations, weights, train_loader_ft, test_loader_ft, device)
             e.append(errors.reshape(1,-1))
-        e = np.concatenate(e, axis=0).mean(axis=0)
+        e = np.concatenate(e, axis=0)
+        e_mean = e.mean(axis=0)
+        e_std = e.std(axis=0)
     
     else:
         e = []
 
     # Write to tensorboard
     writer = SummaryWriter()
-    for i in np.arange(len(e)):
-        writer.add_scalar('error', e[i], i)
+    for i in np.arange(len(e_mean)):
+        writer.add_scalar('accuracy', e_mean[i], iters[i])
     writer.close()
 
     # Save model weights
