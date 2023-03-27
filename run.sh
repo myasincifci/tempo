@@ -8,8 +8,8 @@
 #$ -l cuda=1   # request one GPU
 
 array=("x" "1" "5" "10" "15" "20")
-../env/bin/python tools/linear_eval.py \
+../env/bin/python tools/semi_sup_eval.py \
     --path model_zoo/baseline.pth \
     --runs 100 \
-    --name linear_eval/baseline \
+    --name semi_sup_eval/baseline \
     --samples_pc "${array[$SGE_TASK_ID]}"
