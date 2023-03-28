@@ -56,6 +56,8 @@ class Tempo34RGB(nn.Module):
         else:
             resnet = resnet34()
 
+        
+
         self.backbone = nn.Sequential(*list(resnet.children())[:-1])
         self.projection_head = BarlowTwinsProjectionHead(512, 1024, 1024)
 

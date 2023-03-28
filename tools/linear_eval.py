@@ -15,6 +15,8 @@ from tempo.models import NewTempoLinear
 
 def test_model_fast(model, test_reps, test_dataset, device):
 
+    model.eval()
+
     wrongly_classified = 0
     for repr, label in test_reps:
         total = repr.shape[0]
@@ -26,6 +28,8 @@ def test_model_fast(model, test_reps, test_dataset, device):
 
         wrong = (total - (preds == labels).sum()).item()
         wrongly_classified += wrong
+
+    model.train()
 
     return 1.0 - (wrongly_classified / len(test_dataset))
 
@@ -49,7 +53,7 @@ def linear_eval_new(iterations, model, train_loader, test_loader, device):
             test_reps.append((repr, label.to(device)))
 
     criterion = nn.CrossEntropyLoss().cuda()
-    optimizer = torch.optim.SGD(model.linear.parameters(), lr=0.01)
+    optimizer = torch.optim.SGD(model.linear.parameters(), lr=0.01, weight_decay=0.0001)
 
     # losses, errors = [], []
     # for epoch in range(epochs):
