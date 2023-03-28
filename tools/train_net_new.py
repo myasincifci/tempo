@@ -38,6 +38,22 @@ def train_one_epoch(model, dataloader, criterion, optimizer, device):
 def train(epochs, lr, l, train_loader, pretrain, device):
     model = Tempo34RGB(pretrain=pretrain).to(device)
     criterion = BarlowTwinsLoss(lambda_param=l)
+
+    for param in model.backbone.parameters():
+        param.requires_grad = False
+
+    for param in model.backbone[4].parameters():
+        param.requires_grad = True
+
+    for param in model.backbone[5].parameters():
+        param.requires_grad = True
+
+    for param in model.backbone[6].parameters():
+        param.requires_grad = True
+
+    for param in model.backbone[7].parameters():
+        param.requires_grad = True
+
     optimizer = torch.optim.SGD(model.parameters(), lr=lr, weight_decay=0.001)
 
     for epoch in range(epochs):
