@@ -65,7 +65,7 @@ def main(args):
     print(f'Using device: {device}.')
 
     # Parameters for finetuning
-    num_runs = 5
+    num_runs = 1
     iterations = 3_000
 
     # Choose model
