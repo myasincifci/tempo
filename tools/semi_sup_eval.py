@@ -38,9 +38,19 @@ def semi_sup_eval(iterations, weights, train_loader, test_loader, device):
 
     losses, errors, iters = [], [], []
     i = 0
+    every = 100
+    running_loss = 0.0
     while True:
-        running_loss = 0.0
         for img, label in train_loader:
+            print(i)
+            
+            if i % every == 0:
+                test_error = test_model(model, test_loader, device)
+                losses.append(running_loss)
+                errors.append(test_error)
+                iters.append(i)
+                running_loss = 0
+            
             labels = nn.functional.one_hot(label, num_classes=24).float()
             inputs, labels = img.to(device), labels.to(device)
 
@@ -52,16 +62,16 @@ def semi_sup_eval(iterations, weights, train_loader, test_loader, device):
             optimizer.step()
 
             running_loss += loss.item()
-            print(i)
+
             i += 1
 
             if i == iterations:
-                break
+                test_error = test_model(model, test_loader, device)
+                losses.append(running_loss)
+                errors.append(test_error)
+                iters.append(i)
 
-        test_error = test_model(model, test_loader, device)
-        losses.append(running_loss)
-        errors.append(test_error)
-        iters.append(i)
+                break
 
         if i == iterations:
             break
@@ -78,7 +88,7 @@ def main(args):
 
     # Load datasets
     train_loader_ft = finetune_dataset(name='ASL-big', train=True, batch_size=20, samples_pc=samples_pc)
-    test_loader_ft = finetune_dataset(train=False, batch_size=10)
+    test_loader_ft = finetune_dataset(train=False, batch_size=20)
     
     # Use GPU if availabel
     device = "cuda" if torch.cuda.is_available() else "cpu"
