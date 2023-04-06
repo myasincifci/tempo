@@ -55,27 +55,6 @@ def linear_eval_new(iterations, model, train_loader, test_loader, device):
     criterion = nn.CrossEntropyLoss().cuda()
     optimizer = torch.optim.SGD(model.linear.parameters(), lr=0.01, weight_decay=0.0001)
 
-    # losses, errors = [], []
-    # for epoch in range(epochs):
-    #     running_loss = 0.0
-    #     for repr, label in reps:
-    #         labels = nn.functional.one_hot(label, num_classes=24).float()
-    #         inputs, labels = repr.to(device), labels.to(device)
-
-    #         optimizer.zero_grad()
-
-    #         outputs = model.linear(inputs)
-    #         loss = criterion(outputs, labels)
-    #         loss.backward()
-    #         optimizer.step()
-
-    #         running_loss += loss.item()
-
-    #     test_error = test_model_fast(model.linear, test_reps, test_loader.dataset, device)
-    #     losses.append(running_loss)
-    #     errors.append(test_error)
-    # losses, errors = np.array(losses), np.array(errors)
-
     losses, errors, iters = [], [], []
     i = 0
     while True:
@@ -124,7 +103,7 @@ def main(args):
     print(f'Using device: {device}.')
 
     # Parameters for finetuning
-    iterations = 3_000
+    iterations = 5_000
 
     # Load model from path
     weights = torch.load(path)
