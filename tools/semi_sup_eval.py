@@ -34,7 +34,7 @@ def semi_sup_eval(iterations, weights, train_loader, test_loader, device):
     model.to(device)
 
     criterion = nn.CrossEntropyLoss().cuda()
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.001)
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.06)
 
     losses, errors, iters = [], [], []
     i = 0
@@ -77,7 +77,7 @@ def main(args):
     samples_pc: int = args.samples_pc
 
     # Load datasets
-    train_loader_ft = finetune_dataset(name='ASL-big', train=True, batch_size=10, samples_pc=samples_pc)
+    train_loader_ft = finetune_dataset(name='ASL-big', train=True, batch_size=20, samples_pc=samples_pc)
     test_loader_ft = finetune_dataset(train=False, batch_size=10)
     
     # Use GPU if availabel

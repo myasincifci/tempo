@@ -15,6 +15,12 @@ transform = T.Compose([
     T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
 ])
 
+transform2 = T.Compose([
+    T.Resize(128),
+    T.ToTensor(),
+    # T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
+])
+
 def video_dataset(batch_size=80, proximity=30):
     dataset = TempoDataset('./datasets/ASL-big/frames', transform=transform, proximity=proximity)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=2)
@@ -24,6 +30,12 @@ def video_dataset(batch_size=80, proximity=30):
 def finetune_dataset(name='ASL-big', batch_size=80, train=True, samples_pc=None):
     dataset = Dataset(f'./datasets/{name}', transform=transform, train=train, samples_pc=samples_pc)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=2)
+
+    return dataloader
+
+def finetune_dataset2(name='ASL-big', batch_size=80, train=True, samples_pc=None):
+    dataset = Dataset(f'../datasets/{name}', transform=transform2, train=train, samples_pc=samples_pc)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False, drop_last=False, num_workers=2)
 
     return dataloader
 
