@@ -1,3 +1,4 @@
+import os
 import argparse
 
 from tqdm import tqdm
@@ -94,7 +95,9 @@ def main(args):
     for i in tqdm(range(runs)):
         _, errors, iters = semi_sup_eval(iterations, weights, train_loader_ft, test_loader_ft, device)
         e.append(errors.reshape(1,-1))
-    e = np.concatenate(e, axis=0).mean(axis=0)
+    e = np.concatenate(e, axis=0)
+    e_mean = e.mean(axis=0)
+    e_std = e.std(axis=0)
 
     # Write to tensorboard
     log_dir = os.path.join("runs", name, str(samples_pc)) if name else None

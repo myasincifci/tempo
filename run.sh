@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #$ -binding linear:4 # request 4 cpus (8 with Hyperthreading) (some recommend 4 per GPU)
-#$ -N baseline       # set consistent base name for output and error file (allows for easy deletion alias)
+#$ -N Baseline       # set consistent base name for output and error file (allows for easy deletion alias)
 #$ -q all.q    # don't fill the qlogin queue (can some add why and when to use?)
 #$ -cwd        # change working directory (to current)
 #$ -V          # provide environment variables
