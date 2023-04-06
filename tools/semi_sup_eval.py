@@ -34,7 +34,7 @@ def semi_sup_eval(iterations, weights, train_loader, test_loader, device):
     model.to(device)
 
     criterion = nn.CrossEntropyLoss().cuda()
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.06)
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
 
     losses, errors, iters = [], [], []
     i = 0
