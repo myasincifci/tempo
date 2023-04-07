@@ -38,7 +38,7 @@ def semi_sup_eval(iterations, weights, train_loader, test_loader, device):
 
     losses, errors, iters = [], [], []
     i = 0
-    every = 100
+    every = 1
     running_loss = 0.0
     while True:
         for img, label in train_loader:
@@ -95,7 +95,7 @@ def main(args):
     print(f'Using device: {device}.')
 
     # Parameters for finetuning
-    iterations = 3_000
+    iterations = 200
 
     # Load model from path
     weights = torch.load(path)

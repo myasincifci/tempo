@@ -55,11 +55,24 @@ def linear_eval_new(iterations, model, train_loader, test_loader, device):
     criterion = nn.CrossEntropyLoss().cuda()
     optimizer = torch.optim.SGD(model.linear.parameters(), lr=0.01, weight_decay=0.0001)
 
-    losses, errors, iters = [], [], []
+    losses, errors, iters_ = [], [], []
     i = 0
+    every = 1
+    running_loss = 0.0
+    b1=False
     while True:
-        running_loss = 0.0
         for repr, label in reps:
+            if i % every == 0:
+                test_error = test_model_fast(model.linear, test_reps, test_loader.dataset, device)
+                losses.append(running_loss)
+                errors.append(test_error)
+                iters_.append(i)
+                running_loss = 0
+
+                if i == iterations:
+                    b1=True
+                    break
+
             labels = nn.functional.one_hot(label, num_classes=24).float()
             inputs, labels = repr.to(device), labels.to(device)
 
@@ -71,21 +84,16 @@ def linear_eval_new(iterations, model, train_loader, test_loader, device):
             optimizer.step()
 
             running_loss += loss.item()
+
             i += 1
 
-            if i == iterations:
-                break
-
-        test_error = test_model_fast(model.linear, test_reps, test_loader.dataset, device)
-        losses.append(running_loss)
-        errors.append(test_error)
-        iters.append(i)
-
-        if i == iterations:
+        if i == iterations and b1:
             break
-    losses, errors, iters = np.array(losses), np.array(errors), np.array(iters)
+    losses, errors, iters_ = np.array(losses), np.array(errors), np.array(iters_)
 
-    return (losses, errors, iters)
+    print(iters_)
+
+    return (losses, errors, iters_)
 
 def main(args):
     # Parse commandline-arguments
@@ -103,7 +111,7 @@ def main(args):
     print(f'Using device: {device}.')
 
     # Parameters for finetuning
-    iterations = 5_000
+    iterations = 3000
 
     # Load model from path
     weights = torch.load(path)
@@ -120,6 +128,8 @@ def main(args):
         e.append(errors.reshape(1, -1))
     e = np.concatenate(e, axis=0)
     e_mean = e.mean(axis=0)
+    print(e_mean.shape)
+    print(iters.shape)
     e_std = e.std(axis=0)
 
     # Write to tensorboard
