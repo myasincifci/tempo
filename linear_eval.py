@@ -124,9 +124,9 @@ def main(args):
         _, errors, iters = linear_eval_new(
             iterations, model, train_loader_ft, test_loader_ft, device)
         e.append(errors.reshape(1, -1))
+    
     e = np.concatenate(e, axis=0)
     e_mean = e.mean(axis=0)
-
     print(e_mean.shape)
     print(iters.shape)
     e_std = e.std(axis=0)
