@@ -26,7 +26,7 @@ def test_model(model, testloader, device):
 
     return 1 - (wrongly_classified / len(testloader.dataset))
 
-def semi_sup_eval(iterations, weights, train_loader, test_loader, device):
+def semi_sup_eval(lr, iterations, weights, train_loader, test_loader, device):
     
     model = NewTempoLinear(out_features=24, weights=None)
     model.load_state_dict(weights)
@@ -34,47 +34,45 @@ def semi_sup_eval(iterations, weights, train_loader, test_loader, device):
     model.to(device)
 
     criterion = nn.CrossEntropyLoss().cuda()
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+    optimizer = torch.optim.SGD(model.parameters(), lr=lr)
 
     losses, errors, iters = [], [], []
     i = 0
     every = 1
     running_loss = 0.0
-    while True:
-        for img, label in train_loader:
-            print(i)
-            
-            if i % every == 0:
-                test_error = test_model(model, test_loader, device)
-                losses.append(running_loss)
-                errors.append(test_error)
-                iters.append(i)
-                running_loss = 0
-            
-            labels = nn.functional.one_hot(label, num_classes=24).float()
-            inputs, labels = img.to(device), labels.to(device)
+    b1 = False
 
-            optimizer.zero_grad()
+    with tqdm(total=iterations, leave=False) as pbar:
+        while True:
+            for img, label in train_loader:            
+                if i % every == 0:
+                    test_error = test_model(model, test_loader, device)
+                    losses.append(running_loss)
+                    errors.append(test_error)
+                    iters.append(i)
+                    running_loss = 0
 
-            outputs = model(inputs)
-            loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
+                    if i == iterations:
+                        b1=True
+                        break
+                
+                labels = nn.functional.one_hot(label, num_classes=24).float()
+                inputs, labels = img.to(device), labels.to(device)
 
-            running_loss += loss.item()
+                optimizer.zero_grad()
 
-            i += 1
+                outputs = model(inputs)
+                loss = criterion(outputs, labels)
+                loss.backward()
+                optimizer.step()
 
-            if i == iterations:
-                test_error = test_model(model, test_loader, device)
-                losses.append(running_loss)
-                errors.append(test_error)
-                iters.append(i)
+                running_loss += loss.item()
 
+                i += 1
+                pbar.update(1)
+
+            if i == iterations and b1:
                 break
-
-        if i == iterations:
-            break
     losses, errors, iters = np.array(losses), np.array(errors), np.array(iters)
 
     return (losses, errors, iters)
@@ -85,6 +83,7 @@ def main(args):
     name: str = args.name
     runs: int = args.runs if args.runs else 10
     samples_pc: int = args.samples_pc
+    lr: float = args.lr if args.lr else 0.01
 
     # Load datasets
     train_loader_ft = finetune_dataset(name='ASL-big', train=True, batch_size=20, samples_pc=samples_pc)
@@ -103,7 +102,7 @@ def main(args):
     # Train model 
     e = []
     for i in tqdm(range(runs)):
-        _, errors, iters = semi_sup_eval(iterations, weights, train_loader_ft, test_loader_ft, device)
+        _, errors, iters = semi_sup_eval(lr, iterations, weights, train_loader_ft, test_loader_ft, device)
         e.append(errors.reshape(1,-1))
     e = np.concatenate(e, axis=0)
     e_mean = e.mean(axis=0)
@@ -122,6 +121,7 @@ if __name__ == '__main__':
     parser.add_argument('--runs', type=int, required=False)
     parser.add_argument('--name', type=str, required=False)
     parser.add_argument('--samples_pc', type=int, required=False)
+    parser.add_argument('--lr', type=float, required=False)
 
     args = parser.parse_args()
 

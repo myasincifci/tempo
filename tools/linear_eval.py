@@ -59,7 +59,7 @@ def linear_eval_new(iterations, model, train_loader, test_loader, device):
     i = 0
     every = 1
     running_loss = 0.0
-    b1=False
+    b1 = False
     while True:
         for repr, label in reps:
             if i % every == 0:
@@ -90,8 +90,6 @@ def linear_eval_new(iterations, model, train_loader, test_loader, device):
         if i == iterations and b1:
             break
     losses, errors, iters_ = np.array(losses), np.array(errors), np.array(iters_)
-
-    print(iters_)
 
     return (losses, errors, iters_)
 
