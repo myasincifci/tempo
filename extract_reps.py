@@ -24,9 +24,9 @@ def tes_model(model, test_reps, test_labels, device):
 
     return 1.0 - (wrongly_classified / (test_reps.shape[0] * test_reps.shape[1]))
 
-def get_features(reps, layer):
+def get_features(reps):
     def hook(model, input, output):
-        reps[layer].append(output.data)
+        reps['reps'].append(output.data)
     return hook
 
 def train_layer(representations_train, representations_test, labels_train, labels_test, device):
@@ -37,10 +37,10 @@ def train_layer(representations_train, representations_test, labels_train, label
         ).to(device)
 
     criterion = nn.CrossEntropyLoss().cuda()
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.001, weight_decay=0.0001)
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.01, weight_decay=0.0001)
 
     losses, accuracies = [], []
-    for epoch in range(50):
+    for epoch in tqdm(range(50)):
         for repr, label in zip(representations_train, labels_train):
             
             labels = nn.functional.one_hot(label, num_classes=24).float().to(device)
@@ -60,6 +60,58 @@ def train_layer(representations_train, representations_test, labels_train, label
     
     return accuracies
 
+def eval_layer(layer, model, train_loader, test_loader , device):
+    
+    reps_train = {
+        'reps': [],
+        'labels': []
+    }
+
+    reps_test = {
+        'reps': [],
+        'labels': []
+    }
+
+    h1 = layer.register_forward_hook(get_features(reps_train))
+
+    # Compute train representations
+
+    with torch.no_grad():
+        for input, label in tqdm(train_loader):
+
+            _ = model.backbone(input.to(device)).detach()
+            reps_train['labels'].append(label)
+
+    reps_train['reps'] = torch.stack(reps_train['reps'])
+    reps_train['labels'] = torch.stack(reps_train['labels'])
+
+    h1.remove()
+
+    h2 = layer.register_forward_hook(get_features(reps_test))
+
+    # Compute test representations
+
+    with torch.no_grad():
+        for input, label in tqdm(test_loader):
+
+            _ = model.backbone(input.to(device)).detach()
+            reps_test['labels'].append(label)
+
+    reps_test['reps'] = torch.stack(reps_test['reps'])
+    reps_test['labels'] = torch.stack(reps_test['labels'])
+
+    h2.remove()
+
+    representations_train = reps_train['reps']
+    representations_test  = reps_test['reps']
+
+    labels_train = reps_train['labels']
+    labels_test  = reps_test['labels']
+
+    accuracies = train_layer(representations_train, representations_test, labels_train, labels_test, device)
+
+    return accuracies
+
 def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f'Using device: {device}.')
@@ -72,75 +124,51 @@ def main():
     model.load_state_dict(weights)
     model.to(device)
 
-    reps_train = {
-        'l1': [],
-        'l2': [],
-        'l3': [],
-        'l4': [],
-        'labels': []
-    }
+    layers = [
+        model.backbone[4], # layer1
+        model.backbone[5], # layer2
+        model.backbone[6], # layer3
+        model.backbone[7], # layer4
+        model.backbone[8]  # adaptive pooling
+    ]
+    accuracies = []
+    for layer in layers:
+        accuracy = eval_layer(layer, model, train_loader_ft, test_loader_ft, device)
+        accuracies.append(accuracy)
 
-    reps_test = {
-        'l1': [],
-        'l2': [],
-        'l3': [],
-        'l4': [],
-        'labels': []
-    }
+    maxes = torch.tensor(accuracies).max(dim=1)[0]
+    print(maxes)
+    
+    weights = torch.load("./model_zoo/asl_big_e10_p30_run5.pth")
+    model = NewTempoLinear(out_features=24, weights=None, freeze_backbone=True)
+    model.load_state_dict(weights)
+    model.to(device)
 
-    h1 = model.backbone[4].register_forward_hook(get_features(reps_train, 'l1'))
-    h2 = model.backbone[5].register_forward_hook(get_features(reps_train, 'l2'))
-    h3 = model.backbone[6].register_forward_hook(get_features(reps_train, 'l3'))
-    h4 = model.backbone.register_forward_hook(get_features(reps_train, 'l4'))
+    layers = [
+        model.backbone[4], # layer1
+        model.backbone[5], # layer2
+        model.backbone[6], # layer3
+        model.backbone[7], # layer4
+        model.backbone[8]  # adaptive pooling
+    ]
+    accuracies = []
+    for layer in layers:
+        accuracy = eval_layer(layer, model, train_loader_ft, test_loader_ft, device)
+        accuracies.append(accuracy)
 
-    # Compute train representations
+    maxes_tp = torch.tensor(accuracies).max(dim=1)[0]
+    print(maxes)
 
-    with torch.no_grad():
-        for input, label in tqdm(train_loader_ft):
+    fig, ax = plt.subplots()
 
-            _ = model.backbone(input.to(device)).detach()
-            reps_train['labels'].append(label)
+    ax.plot(maxes, '-ro', label='Baseline')
+    ax.plot(maxes_tp, '-bo', label='Tempo')
+    ax.legend()
+    ax.set_xticks([0,1,2,3,4])
 
-    reps_train['l1'] = torch.stack(reps_train['l1'])
-    reps_train['l2'] = torch.stack(reps_train['l2'])
-    reps_train['l3'] = torch.stack(reps_train['l3'])
-    reps_train['l4'] = torch.stack(reps_train['l4'])
-    reps_train['labels'] = torch.stack(reps_train['labels'])
-
-    h1.remove()
-    h2.remove()
-    h3.remove()
-    h4.remove()
-
-    h1 = model.backbone[4].register_forward_hook(get_features(reps_test, 'l1'))
-    h2 = model.backbone[5].register_forward_hook(get_features(reps_test, 'l2'))
-    h3 = model.backbone[6].register_forward_hook(get_features(reps_test, 'l3'))
-    h4 = model.backbone.register_forward_hook(get_features(reps_test, 'l4'))
-
-    # Compute test representations
-
-    with torch.no_grad():
-        for input, label in tqdm(test_loader_ft):
-
-            _ = model.backbone(input.to(device)).detach()
-            reps_test['labels'].append(label)
-
-    reps_test['l1'] = torch.stack(reps_test['l1'])
-    reps_test['l2'] = torch.stack(reps_test['l2'])
-    reps_test['l3'] = torch.stack(reps_test['l3'])
-    reps_test['l4'] = torch.stack(reps_test['l4'])
-    reps_test['labels'] = torch.stack(reps_test['labels'])
-
-    ############################################################################
-
-    representations_train = reps_train['l3']
-    representations_test  = reps_test['l3']
-
-    labels_train = reps_train['labels']
-    labels_test  = reps_test['labels']
-
+    fig.canvas.draw()
+    ax.set_xticklabels(['layer1', 'layer2', 'layer3', 'layer4', 'adaptive-pooling'])
     plt.show()
-
 
 if __name__ == '__main__':
     main()
