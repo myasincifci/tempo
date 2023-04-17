@@ -5,3 +5,11 @@
 /xai/asl_images
 /xai/asl_images_old
 /runs
+/model_zoo
+
+/segmentation/*.pth
+/segmentation/*.pkl
+/segmentation/detectron2
+/segmentation/balloon*
+/segmentation/*.pth
+/segmentation/output*
