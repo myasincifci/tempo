@@ -59,7 +59,8 @@ class Tempo34RGB(nn.Module):
         
 
         self.backbone = nn.Sequential(*list(resnet.children())[:-1])
-        self.projection_head = BarlowTwinsProjectionHead(512, 1024, 1024)
+        # self.projection_head = BarlowTwinsProjectionHead(512, 1024, 1024)
+        self.projection_head = BarlowTwinsProjectionHead(512, 2048, 2048)
 
     def forward(self, x):
         x = self.backbone(x).flatten(start_dim=1)

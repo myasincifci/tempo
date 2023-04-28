@@ -39,25 +39,26 @@ def train(epochs, lr, l, train_loader, pretrain, device):
     model = Tempo34RGB(pretrain=pretrain).to(device)
     criterion = BarlowTwinsLoss(lambda_param=l)
 
-    for param in model.backbone.parameters():
-        param.requires_grad = False
+    # for param in model.backbone.parameters():
+    #     param.requires_grad = False
 
-    for param in model.backbone[4].parameters():
-        param.requires_grad = True
+    # for param in model.backbone[4].parameters():
+    #     param.requires_grad = True
 
-    for param in model.backbone[5].parameters():
-        param.requires_grad = True
+    # for param in model.backbone[5].parameters():
+    #     param.requires_grad = True
 
-    for param in model.backbone[6].parameters():
-        param.requires_grad = True
+    # for param in model.backbone[6].parameters():
+    #     param.requires_grad = True
 
-    for param in model.backbone[7].parameters():
-        param.requires_grad = True
+    # for param in model.backbone[7].parameters():
+    #     param.requires_grad = True
 
-    optimizer = torch.optim.SGD(model.parameters(), lr=lr, weight_decay=0.001)
+    optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=0.001)
 
     for epoch in range(epochs):
-        train_one_epoch(model, train_loader, criterion, optimizer, device)
+        loss = train_one_epoch(model, train_loader, criterion, optimizer, device)
+        print(epoch, loss)
 
     return model.backbone.state_dict()
 
@@ -72,7 +73,7 @@ def main(args):
     save_model = args.save_model
 
     # Load datasets
-    train_loader = video_dataset(proximity=proximity)
+    train_loader = video_dataset(proximity=proximity, batch_size=100)
     train_loader_ft = finetune_dataset(name='ASL-big', train=True, batch_size=10)
     test_loader_ft = finetune_dataset(train=False, batch_size=10)
 
@@ -81,12 +82,12 @@ def main(args):
     print(f'Using device: {device}.')
 
     # Parameters for finetuning
-    num_runs = 1
+    num_runs = 3
     iterations = 3_000
 
     # Choose model
     if baseline:
-        model = NewBaseline(out_features=10, pretrain=True).to(device)
+        model = NewBaseline(out_features=24, pretrain=True).to(device)
     else:
         weights = train(epochs, lr, l, train_loader, pretrain=True, device=device)
         model = NewTempoLinear(weights, out_features=24).to(device)
