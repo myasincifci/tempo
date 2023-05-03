@@ -13,3 +13,6 @@
 /segmentation/balloon*
 /segmentation/*.pth
 /segmentation/output*
+
+/xai/gtFine
+/xai/imgsFine

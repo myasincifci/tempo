@@ -9,6 +9,7 @@ from torch.utils.data import DataLoader
 from torchvision import transforms as T
 from lightly.loss import BarlowTwinsLoss
 from torchvision.models import ResNet34_Weights
+from torch.optim.lr_scheduler import LinearLR, ReduceLROnPlateau
 
 from tempo.models import Tempo34RGB, NewBaseline, NewTempoLinear, get_resnet_weights
 from tempo.data.datasets import video_dataset, finetune_dataset
@@ -54,11 +55,15 @@ def train(epochs, lr, l, train_loader, pretrain, device):
     # for param in model.backbone[7].parameters():
     #     param.requires_grad = True
 
-    optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=0.001)
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=0.001)
+    scheduler = LinearLR(optimizer, start_factor=lr/10, total_iters=10)
+    scheduler2 = ReduceLROnPlateau(optimizer, mode='min')
 
     for epoch in range(epochs):
         loss = train_one_epoch(model, train_loader, criterion, optimizer, device)
-        print(epoch, loss)
+        scheduler.step()
+        scheduler2.step(loss)
+        print(epoch, loss, optimizer.param_groups[0]['lr'])
 
     return model.backbone.state_dict()
 
@@ -73,7 +78,7 @@ def main(args):
     save_model = args.save_model
 
     # Load datasets
-    train_loader = video_dataset(proximity=proximity, batch_size=100)
+    train_loader = video_dataset(proximity=proximity, batch_size=200)
     train_loader_ft = finetune_dataset(name='ASL-big', train=True, batch_size=10)
     test_loader_ft = finetune_dataset(train=False, batch_size=10)
 
@@ -89,7 +94,7 @@ def main(args):
     if baseline:
         model = NewBaseline(out_features=24, pretrain=True).to(device)
     else:
-        weights = train(epochs, lr, l, train_loader, pretrain=True, device=device)
+        weights = train(epochs, lr, l, train_loader, pretrain=False, device=device)
         model = NewTempoLinear(weights, out_features=24).to(device)
 
     # Train model 
