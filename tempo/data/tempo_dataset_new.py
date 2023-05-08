@@ -16,7 +16,7 @@ def p_uni(i: int, tau: int, I: int):
     '''
 
     x = np.arange(I)
-    m = ((x != 5) & (x <= 5 + 2) & (x >= 5 - 2)).astype(int)
+    m = ((x != i) & (x <= i + tau) & (x >= i - tau)).astype(int)
     p = 1 / (min(tau, i) + min(tau, I - i - 1))
 
     return m * p
