@@ -55,14 +55,16 @@ def train(epochs, lr, l, train_loader, pretrain, device):
     # for param in model.backbone[7].parameters():
     #     param.requires_grad = True
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=0.001)
-    scheduler = LinearLR(optimizer, start_factor=lr/10, total_iters=10)
-    scheduler2 = ReduceLROnPlateau(optimizer, mode='min')
+    optimizer = torch.optim.AdamW([
+        {"params": model.parameters()}
+        ], lr=lr)
+    # scheduler = LinearLR(optimizer, start_factor=lr/100, total_iters=10)
+    # scheduler2 = ReduceLROnPlateau(optimizer, mode='min', patience=2)
 
     for epoch in range(epochs):
         loss = train_one_epoch(model, train_loader, criterion, optimizer, device)
-        scheduler.step()
-        scheduler2.step(loss)
+        # scheduler.step()
+        # scheduler2.step(loss)
         print(epoch, loss, optimizer.param_groups[0]['lr'])
 
     return model.backbone.state_dict()
@@ -94,7 +96,7 @@ def main(args):
     if baseline:
         model = NewBaseline(out_features=24, pretrain=True).to(device)
     else:
-        weights = train(epochs, lr, l, train_loader, pretrain=False, device=device)
+        weights = train(epochs, lr, l, train_loader, pretrain=True, device=device)
         model = NewTempoLinear(weights, out_features=24).to(device)
 
     # Train model 

@@ -86,7 +86,7 @@ def main(args):
     lr: float = args.lr if args.lr else 0.01
 
     # Load datasets
-    train_loader_ft = finetune_dataset(name='ASL-big', train=True, batch_size=20, samples_pc=samples_pc)
+    train_loader_ft = finetune_dataset(name='ASL-big', train=True, batch_size=128, samples_pc=samples_pc)
     test_loader_ft = finetune_dataset(train=False, batch_size=20)
     
     # Use GPU if availabel

@@ -101,7 +101,7 @@ def main(args):
     samples_pc: int = args.samples_pc
 
     # Load datasets
-    train_loader_ft = finetune_dataset(name='ASL-big', train=True, batch_size=10, samples_pc=samples_pc)
+    train_loader_ft = finetune_dataset(name='ASL-big', train=True, batch_size=24, samples_pc=samples_pc)
     test_loader_ft = finetune_dataset(train=False, batch_size=10)
 
     # Use GPU if availabel

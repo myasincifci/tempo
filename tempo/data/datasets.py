@@ -28,27 +28,27 @@ transform50 = T.Compose([
 
 def video_dataset50(batch_size=80, proximity=30):
     dataset = TempoDataset('./datasets/ASL-big/frames', transform=transform50, proximity=proximity)
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=2)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, drop_last=False, num_workers=2)
     print(50)
 
     return dataloader
 
 def finetune_dataset50(name='ASL-big', batch_size=80, train=True, samples_pc=None):
     dataset = Dataset(f'./datasets/{name}', transform=transform50, train=train, samples_pc=samples_pc)
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=2)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, drop_last=False, num_workers=2)
     print(50)
 
     return dataloader
 
 def video_dataset(batch_size=80, proximity=30):
     dataset = TempoDataset('./datasets/ASL-big/frames', transform=transform, proximity=proximity)
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=8)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, drop_last=False, num_workers=8)
 
     return dataloader
 
 def finetune_dataset(name='ASL-big', batch_size=80, train=True, samples_pc=None):
     dataset = Dataset(f'./datasets/{name}', transform=transform, train=train, samples_pc=samples_pc)
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=2)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, drop_last=False, num_workers=2)
 
     return dataloader
 
