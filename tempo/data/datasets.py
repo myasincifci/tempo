@@ -1,5 +1,6 @@
 from tempo.data.time_shift_dataset import TimeShiftDataset
-from tempo.data.tempo_dataset import TempoDataset
+# from tempo.data.tempo_dataset import TempoDataset
+from tempo.data.tempo_dataset_new import TempoDataset
 from tempo.data.finetune_dataset import FinetuneDataset
 from tempo.data.dataset import Dataset
 

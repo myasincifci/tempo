@@ -10,6 +10,8 @@ import torchvision.transforms as T
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import ImageGrid
 
+import scipy.stats as stats
+
 def p_uni(i: int, tau: int, I: int):
     '''
     PDF for sampling f_j given reference frame f_i.
@@ -20,6 +22,17 @@ def p_uni(i: int, tau: int, I: int):
     p = 1 / (min(tau, i) + min(tau, I - i - 1))
 
     return m * p
+
+def p_nml(i: int, sigma: float, I):
+    '''
+    PDF for sampling f' given reference frame f.
+    '''
+    x = np.arange(I)
+    pdf = stats.norm.pdf(x, i, sigma)
+    pdf[i] = 0.0
+    p = pdf / pdf.sum()
+
+    return p
 
 class TempoDataset(Dataset):
     def __init__(self, path, transform=None, proximity:int=3) -> None:
@@ -40,8 +53,9 @@ class TempoDataset(Dataset):
         # possbile_r = range(index + 1, ((index + self.p + 1) if (index + self.p + 1) <= len(self) else len(self)))
         # index_d = np.random.choice(list(possbile_l) + list(possbile_r))
         # image_d = Image.open(self.image_paths[index_d])
-        p = p_uni(index, self.p, self.__len__())
-        index_d = np.random.choice(p)
+
+        pb = p_nml(index, self.p, self.__len__())
+        index_d = np.random.choice(np.arange(len(pb)), p=pb)
         image_d = Image.open(self.image_paths[index_d])
 
         if self.transform:
