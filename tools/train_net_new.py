@@ -56,16 +56,18 @@ def train(epochs, lr, l, train_loader, pretrain, device):
     #     param.requires_grad = True
 
     optimizer = torch.optim.AdamW([
-        {"params": model.parameters()}
-        ], lr=lr)
-    # scheduler = LinearLR(optimizer, start_factor=lr/100, total_iters=10)
+        {"params": model.backbone.parameters(), "lr": 8e-4},
+        {"params": model.projection_head.parameters(), "lr": 1e-5}
+    ])
+    # scheduler = LinearLR(optimizer, start_factor=1/8, total_iters=10)
     # scheduler2 = ReduceLROnPlateau(optimizer, mode='min', patience=2)
 
     for epoch in range(epochs):
+        print(optimizer.param_groups[0]['lr'], optimizer.param_groups[1]['lr'])
         loss = train_one_epoch(model, train_loader, criterion, optimizer, device)
         # scheduler.step()
         # scheduler2.step(loss)
-        print(epoch, loss, optimizer.param_groups[0]['lr'])
+        print(epoch, loss)
 
     return model.backbone.state_dict()
 
