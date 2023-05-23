@@ -56,8 +56,10 @@ def train(epochs, lr, l, train_loader, pretrain, device):
     #     param.requires_grad = True
 
     optimizer = torch.optim.AdamW([
-        {"params": model.backbone.parameters(), "lr": 8e-4},
+        {"params": model.backbone.parameters(), "lr": 5e-5},
         {"params": model.projection_head.parameters(), "lr": 1e-5}
+        # {"params": [t for n, t in model.named_parameters() if not ("bn" in n or "bias" in n)], "lr": 5e-5},
+        # {"params": [t for n, t in model.named_parameters() if     ("bn" in n or "bias" in n)], "lr": 1e-5}
     ])
     # scheduler = LinearLR(optimizer, start_factor=1/8, total_iters=10)
     # scheduler2 = ReduceLROnPlateau(optimizer, mode='min', patience=2)
