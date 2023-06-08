@@ -1,3 +1,5 @@
+import os
+
 import torch
 from torch import nn
 import matplotlib.pyplot as plt
@@ -5,6 +7,8 @@ import numpy as np
 from tempo.data.datasets import finetune_dataset
 from tempo.models import NewTempoLinear
 from tqdm import tqdm
+from torch.utils.tensorboard import SummaryWriter
+
 
 def tes_model(model, test_reps, test_labels, device):
     
@@ -116,7 +120,7 @@ def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f'Using device: {device}.')
 
-    train_loader_ft = finetune_dataset(name='ASL-big', train=True, batch_size=20)
+    train_loader_ft = finetune_dataset(name='ASL-big', train=True, batch_size=20, drop_last=True)
     test_loader_ft = finetune_dataset(train=False, batch_size=20)
 
     weights = torch.load("./model_zoo/baseline.pth")
@@ -159,16 +163,35 @@ def main():
     maxes_tp = torch.tensor(accuracies).max(dim=1)[0]
     print(maxes)
 
-    fig, ax = plt.subplots()
+    # fig, ax = plt.subplots()
 
-    ax.plot(maxes, '-ro', label='Baseline')
-    ax.plot(maxes_tp, '-bo', label='Tempo')
-    ax.legend()
-    ax.set_xticks([0,1,2,3,4])
+    # ax.plot(maxes, '-ro', label='Baseline')
+    # ax.plot(maxes_tp, '-bo', label='Tempo')
+    # ax.legend()
+    # ax.set_xticks([0,1,2,3,4])
 
-    fig.canvas.draw()
-    ax.set_xticklabels(['layer1', 'layer2', 'layer3', 'layer4', 'adaptive-pooling'])
-    plt.show()
+    # fig.canvas.draw()
+    # ax.set_xticklabels(['layer1', 'layer2', 'layer3', 'layer4', 'adaptive-pooling'])
+
+    # fig.figsize = (2,1)
+
+    # plt.show()
+
+    # Write to tensorboard
+    log_dir = os.path.join("runs", "lin_layers_bl")
+    writer = SummaryWriter(log_dir)
+
+    for i, m in enumerate(maxes):# np.arange(len(e_mean)):
+        writer.add_scalar('accuracy', m, i)
+    writer.close()
+
+    # Write to tensorboard
+    log_dir = os.path.join("runs", "lin_layers_tp")
+    writer = SummaryWriter(log_dir)
+
+    for i, m in enumerate(maxes_tp):# np.arange(len(e_mean)):
+        writer.add_scalar('accuracy', m, i)
+    writer.close()
 
 if __name__ == '__main__':
     main()
